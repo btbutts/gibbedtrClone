@@ -33,7 +33,7 @@ namespace Gibbed.DeusEx3.DRMEdit
     {
         private static string GetExecutableName()
         {
-            return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
+            return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         }
 
         [STAThread]

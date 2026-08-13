@@ -38,7 +38,7 @@ namespace Gibbed.TombRaider.DRMEdit
     {
         private static string GetExecutableName()
         {
-            return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
+            return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         }
 
         private static bool LooksLikeOption(string arg)

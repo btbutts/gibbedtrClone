@@ -163,7 +163,7 @@ namespace Gibbed.Squish
 				
 				// Allocate room for compressed blocks, and read data into it.
 				var compressedBlocks = new byte[blockCount * blockSize];
-                input.Read(compressedBlocks, 0, compressedBlocks.Length);
+                input.ReadExactly(compressedBlocks, 0, compressedBlocks.Length);
 
 				// Now decompress..
 				this._PixelData = Native.DecompressImage(

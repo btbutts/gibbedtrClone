@@ -36,7 +36,7 @@ namespace Gibbed.IO
                                                         bool trailingNull)
         {
             var data = new byte[size];
-            stream.Read(data, 0, data.Length);
+            stream.ReadExactly(data, 0, data.Length);
 
             string value = encoding.GetString(data, 0, data.Length);
 
