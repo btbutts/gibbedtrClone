@@ -800,8 +800,13 @@ namespace Mono.Options
 
 			Option p;
 			if (Contains (n)) {
-				p = this [n];
-				c.OptionName = f + n;
+                try {
+                    p = this [n];
+                }
+                catch (KeyNotFoundException) {
+                    return false;
+                }
+                c.OptionName = f + n;
 				c.Option     = p;
 				switch (p.OptionValueType) {
 					case OptionValueType.None:
@@ -850,8 +855,12 @@ namespace Mono.Options
 			string rn;
 			if (n.Length >= 1 && (n [n.Length-1] == '+' || n [n.Length-1] == '-') &&
 					Contains ((rn = n.Substring (0, n.Length-1)))) {
-				p = this [rn];
-				string v = n [n.Length-1] == '+' ? option : null;
+				try {
+					p = this[rn];
+				} catch (KeyNotFoundException) {
+                    return false;
+                }
+                string v = n [n.Length-1] == '+' ? option : null;
 				c.OptionName  = option;
 				c.Option      = p;
 				c.OptionValues.Add (v);
