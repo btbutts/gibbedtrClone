@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml;
@@ -37,6 +38,12 @@ namespace Gibbed.TombRaider.UnpackTiger
         private static string GetExecutableName()
         {
             return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
+        }
+
+        private static bool LooksLikeOption(string arg)
+        {
+            return string.IsNullOrEmpty(arg) == false &&
+                (arg[0] == '-' || arg[0] == '/');
         }
 
         private static bool Is000(string path)
@@ -91,7 +98,8 @@ namespace Gibbed.TombRaider.UnpackTiger
             bool showHelp = false;
             bool? extractUnknowns = null;
             bool overwriteFiles = false;
-            bool verbose = true;
+            bool verbose = false;
+            bool useDateTag = false;
             string currentProject = null;
             bool littleEndian = true;
 
@@ -99,47 +107,52 @@ namespace Gibbed.TombRaider.UnpackTiger
             {
                 {
                     "o|overwrite",
-                    "overwrite existing files",
+                    "overwrite existing files in the output directory",
                     v => overwriteFiles = v != null
                 },
                 {
                     "nu|no-unknowns",
-                    "don't extract unknown files",
+                    "don't extract files that couldn't be matched to a name (skips the __UNKNOWN folder)",
                     v => extractUnknowns = v != null ? false : extractUnknowns
                 },
                 {
                     "ou|only-unknowns",
-                    "only extract unknown files",
+                    "only extract files that couldn't be matched to a name (only the __UNKNOWN folder)",
                     v => extractUnknowns = v != null ? true : extractUnknowns
                 },
                 {
                     "l|little-endian",
-                    "operate in little-endian mode",
+                    "read the archive as little-endian (default)",
                     v => littleEndian = v != null ? true : littleEndian
                 },
                 {
                     "b|big-endian",
-                    "operate in big-endian mode",
+                    "read the archive as big-endian",
                     v => littleEndian = v != null ? false : littleEndian
                 },
                 {
                     "v|verbose",
-                    "be verbose",
+                    "list every extracted file as it's written; without this, a percentage-complete counter is shown instead",
                     v => verbose = v != null
                 },
                 {
-                    "h|help",
-                    "show this message and exit", 
-                    v => showHelp = v != null
+                    "d|date",
+                    "tag the output directory name with the current date/time, e.g. '_13AUG2026_0225'",
+                    v => useDateTag = v != null
                 },
                 {
                     "p|project=",
-                    "override current project",
+                    "override the active project (see the project data configuration for valid names)",
                     v => currentProject = v
+                },
+                {
+                    "h|help",
+                    "show this message and exit",
+                    v => showHelp = v != null
                 },
             };
 
-            List<string> extras;
+            List<string> extras = new List<string>();
 
             try
             {
@@ -147,10 +160,25 @@ namespace Gibbed.TombRaider.UnpackTiger
             }
             catch (OptionException e)
             {
+                // Option-parsing error (missing value, unknown option, etc.) -- show the same help as -h/--help.
                 Console.Write("{0}: ", GetExecutableName());
                 Console.WriteLine(e.Message);
-                Console.WriteLine("Try `{0} --help' for more information.", GetExecutableName());
-                return;
+                Console.WriteLine();
+                showHelp = true;
+            }
+
+            if (showHelp == false)
+            {
+                var badOption = extras.FirstOrDefault(a => LooksLikeOption(a));
+                if (badOption != null)
+                {
+                    // Not every unrecognized flag throws -- NDesk.Options passes unmatched
+                    // long/"/"-style options through as plain positional args instead.
+                    Console.Write("{0}: ", GetExecutableName());
+                    Console.WriteLine("unrecognized option `{0}'.", badOption);
+                    Console.WriteLine();
+                    showHelp = true;
+                }
             }
 
             if (extras.Count < 1 ||
@@ -160,16 +188,29 @@ namespace Gibbed.TombRaider.UnpackTiger
             {
                 Console.WriteLine("Usage: {0} [OPTIONS]+ input_file.tiger [output_dir]", GetExecutableName());
                 Console.WriteLine();
+                Console.WriteLine("Unpacks a multi-part .tiger bigfile archive (input_file.tiger.000, ...)");
+                Console.WriteLine("into a new folder named '<input_file>_unpack', created under output_dir");
+                Console.WriteLine("(or the current directory if output_dir is omitted). Pass -d/--date to tag");
+                Console.WriteLine("that folder name with the current date/time instead of reusing it, e.g.");
+                Console.WriteLine("'<input_file>_unpack_13AUG2026_0225'.");
+                Console.WriteLine();
                 Console.WriteLine("Options:");
                 options.WriteOptionDescriptions(Console.Out);
                 return;
             }
 
             string inputPath = extras[0];
-            string outputPath = extras.Count > 1 ? extras[1] : Path.ChangeExtension(inputPath, null) + "_unpack";
 
             string bigPathSuffix;
             var bigPathBase = GetBasePath(inputPath, out bigPathSuffix);
+
+            string outputBaseDir = extras.Count > 1 ? extras[1] : ".";
+            string unpackDirName = Path.GetFileName(bigPathBase) + "_unpack";
+            if (useDateTag == true)
+            {
+                unpackDirName += "_" + DateTime.Now.ToString("ddMMMyyyy_HHmm", CultureInfo.InvariantCulture).ToUpperInvariant();
+            }
+            string outputPath = Path.Combine(outputBaseDir, unpackDirName);
 
             var manager = ProjectData.Manager.Load(currentProject);
             if (manager.ActiveProject == null)
@@ -210,10 +251,21 @@ namespace Gibbed.TombRaider.UnpackTiger
                 {
                     long current = 0;
                     long total = big.Entries.Count;
+                    int lastPercent = -1;
 
                     foreach (var entry in big.Entries.OrderBy(e => e.File).ThenBy(e => e.Offset))
                     {
                         current++;
+
+                        if (verbose == false)
+                        {
+                            int percent = total > 0 ? (int)((current * 100) / total) : 100;
+                            if (percent != lastPercent)
+                            {
+                                Console.Write("\rUnpacking... {0,3}% ({1}/{2})", percent, current, total);
+                                lastPercent = percent;
+                            }
+                        }
 
                         var entryBigFile = entry.File;
                         var entryOffset = entry.Offset;
@@ -237,6 +289,25 @@ namespace Gibbed.TombRaider.UnpackTiger
                             if (verbose == true)
                             {
                                 Console.WriteLine(bigPath);
+                            }
+
+                            if (File.Exists(bigPath) == false)
+                            {
+                                if (verbose == false)
+                                {
+                                    Console.WriteLine();
+                                }
+                                Console.WriteLine(
+                                    "At least a portion of the multi-file, enumerated{1}bigfile series is missing: '{0}'",
+                                    Path.GetFileName(bigPath),
+                                    Environment.NewLine);
+                                Console.WriteLine(
+                                    "Please place '{0}' in the same folder as{3}'{1}' and re-run {2}",
+                                    Path.GetFileName(bigPath),
+                                    Path.GetFileName(inputPath),
+                                    GetExecutableName(),
+                                    Environment.NewLine);
+                                return;
                             }
 
                             data = File.OpenRead(bigPath);
@@ -336,6 +407,11 @@ namespace Gibbed.TombRaider.UnpackTiger
                             }
                         }
                     }
+                }
+
+                if (verbose == false)
+                {
+                    Console.WriteLine();
                 }
 
                 if (data != null)

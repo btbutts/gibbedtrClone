@@ -704,7 +704,7 @@ namespace Mono.Options
 			bool process = true;
 			OptionContext c = CreateOptionContext ();
 			c.OptionIndex = -1;
-			var def = base["<>"];
+			var def = Contains ("<>") ? this ["<>"] : null;
 			var unprocessed = 
 				from argument in arguments
 				where ++c.OptionIndex >= 0 && (process || def != null)
@@ -733,7 +733,12 @@ namespace Mono.Options
 			c.OptionIndex = -1;
 			bool process = true;
 			List<string> unprocessed = new List<string> ();
-			Option def = Contains ("<>") ? this ["<>"] : null;
+			Option def = null;
+			if (Contains("<>"))
+			{
+				try { def = this["<>"]; }
+				catch (KeyNotFoundException) { def = null; }
+			}
 			foreach (string argument in arguments) {
 				++c.OptionIndex;
 				if (argument == "--") {
@@ -753,7 +758,7 @@ namespace Mono.Options
 		}
 #endif
 
-		private static bool Unprocessed (ICollection<string> extra, Option def, OptionContext c, string argument)
+        private static bool Unprocessed (ICollection<string> extra, Option def, OptionContext c, string argument)
 		{
 			if (def == null) {
 				extra.Add (argument);
@@ -800,21 +805,16 @@ namespace Mono.Options
 
 			Option p;
 			if (Contains (n)) {
-                try {
-                    p = this [n];
-                }
-                catch (KeyNotFoundException) {
-                    return false;
-                }
-                c.OptionName = f + n;
-				c.Option     = p;
+				p = this [n];
+				c.OptionName = f + n;
+				c.Option = p;
 				switch (p.OptionValueType) {
 					case OptionValueType.None:
 						c.OptionValues.Add (n);
 						c.Option.Invoke (c);
 						break;
 					case OptionValueType.Optional:
-					case OptionValueType.Required: 
+					case OptionValueType.Required:
 						ParseValue (v, c);
 						break;
 				}
@@ -830,7 +830,7 @@ namespace Mono.Options
 			return false;
 		}
 
-		private void ParseValue (string option, OptionContext c)
+        private void ParseValue (string option, OptionContext c)
 		{
 			if (option != null)
 				foreach (string o in c.Option.ValueSeparators != null 
@@ -851,16 +851,11 @@ namespace Mono.Options
 
 		private bool ParseBool (string option, string n, OptionContext c)
 		{
-			Option p;
 			string rn;
 			if (n.Length >= 1 && (n [n.Length-1] == '+' || n [n.Length-1] == '-') &&
 					Contains ((rn = n.Substring (0, n.Length-1)))) {
-				try {
-					p = this[rn];
-				} catch (KeyNotFoundException) {
-                    return false;
-                }
-                string v = n [n.Length-1] == '+' ? option : null;
+				Option p = this [rn];
+				string v = n [n.Length-1] == '+' ? option : null;
 				c.OptionName  = option;
 				c.Option      = p;
 				c.OptionValues.Add (v);
@@ -891,8 +886,8 @@ namespace Mono.Options
 						break;
 					case OptionValueType.Optional:
 					case OptionValueType.Required: {
-						string v     = n.Substring (i+1);
-						c.Option     = p;
+						string v = n.Substring (i+1);
+						c.Option = p;
 						c.OptionName = opt;
 						ParseValue (v.Length != 0 ? v : null, c);
 						return true;
@@ -904,7 +899,7 @@ namespace Mono.Options
 			return true;
 		}
 
-		private static void Invoke (OptionContext c, string name, string value, Option option)
+        private static void Invoke (OptionContext c, string name, string value, Option option)
 		{
 			c.OptionName  = name;
 			c.Option      = option;

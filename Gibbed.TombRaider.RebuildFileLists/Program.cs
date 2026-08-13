@@ -37,6 +37,12 @@ namespace Gibbed.TombRaider.RebuildFileLists
             return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
         }
 
+        private static bool LooksLikeOption(string arg)
+        {
+            return string.IsNullOrEmpty(arg) == false &&
+                (arg[0] == '-' || arg[0] == '/');
+        }
+
         private static string GetListPath(string installPath, string inputPath)
         {
             installPath = installPath.ToLowerInvariant();
@@ -64,28 +70,28 @@ namespace Gibbed.TombRaider.RebuildFileLists
             var options = new OptionSet()
             {
                 {
-                    "h|help",
-                    "show this message and exit", 
-                    v => showHelp = v != null
-                },
-                {
                     "l|little-endian",
-                    "operate in little-endian mode",
+                    "read archives as little-endian (default)",
                     v => littleEndian = v != null ? true : littleEndian
                 },
                 {
                     "b|big-endian",
-                    "operate in big-endian mode",
+                    "read archives as big-endian",
                     v => littleEndian = v != null ? false : littleEndian
                 },
                 {
                     "p|project=",
-                    "override current project",
+                    "override the active project (see the project data configuration for valid names)",
                     v => currentProject = v
+                },
+                {
+                    "h|help",
+                    "show this message and exit",
+                    v => showHelp = v != null
                 },
             };
 
-            List<string> extras;
+            List<string> extras = new List<string>();
 
             try
             {
@@ -93,15 +99,34 @@ namespace Gibbed.TombRaider.RebuildFileLists
             }
             catch (OptionException e)
             {
+                // Option-parsing error (missing value, unknown option, etc.) -- show the same help as -h/--help.
                 Console.Write("{0}: ", GetExecutableName());
                 Console.WriteLine(e.Message);
-                Console.WriteLine("Try `{0} --help' for more information.", GetExecutableName());
-                return;
+                Console.WriteLine();
+                showHelp = true;
+            }
+
+            if (showHelp == false)
+            {
+                var badOption = extras.FirstOrDefault(a => LooksLikeOption(a));
+                if (badOption != null)
+                {
+                    // Not every unrecognized flag throws -- NDesk.Options passes unmatched
+                    // long/"/"-style options through as plain positional args instead.
+                    Console.Write("{0}: ", GetExecutableName());
+                    Console.WriteLine("unrecognized option `{0}'.", badOption);
+                    Console.WriteLine();
+                    showHelp = true;
+                }
             }
 
             if (extras.Count != 0 || showHelp == true)
             {
                 Console.WriteLine("Usage: {0} [OPTIONS]+", GetExecutableName());
+                Console.WriteLine();
+                Console.WriteLine("Scans the active project's install path for every '*.000' archive and");
+                Console.WriteLine("rebuilds the matching '.filelist' name lists under the project's lists path.");
+                Console.WriteLine("This tool takes no positional arguments.");
                 Console.WriteLine();
                 Console.WriteLine("Options:");
                 options.WriteOptionDescriptions(Console.Out);

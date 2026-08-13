@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Xml.XPath;
 using Gibbed.CrystalDynamics.FileFormats;
 using Gibbed.IO;
@@ -42,21 +43,32 @@ namespace Gibbed.TombRaider.Pack
             return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
         }
 
+        private static bool LooksLikeOption(string arg)
+        {
+            return string.IsNullOrEmpty(arg) == false &&
+                (arg[0] == '-' || arg[0] == '/');
+        }
+
         public static void Main(string[] args)
         {
-            bool verbose = true;
+            bool verbose = false;
             bool showHelp = false;
 
             var options = new OptionSet()
             {
                 {
+                    "v|verbose",
+                    "list every packed file as it's written; without this, a percentage-complete counter is shown instead",
+                    v => verbose = v != null
+                },
+                {
                     "h|help",
-                    "show this message and exit", 
+                    "show this message and exit",
                     v => showHelp = v != null
                 },
             };
 
-            List<string> extras;
+            List<string> extras = new List<string>();
 
             try
             {
@@ -64,16 +76,35 @@ namespace Gibbed.TombRaider.Pack
             }
             catch (OptionException e)
             {
+                // Option-parsing error (missing value, unknown option, etc.) -- show the same help as -h/--help.
                 Console.Write("{0}: ", GetExecutableName());
                 Console.WriteLine(e.Message);
-                Console.WriteLine("Try `{0} --help' for more information.", GetExecutableName());
-                return;
+                Console.WriteLine();
+                showHelp = true;
+            }
+
+            if (showHelp == false)
+            {
+                var badOption = extras.FirstOrDefault(a => LooksLikeOption(a));
+                if (badOption != null)
+                {
+                    // Not every unrecognized flag throws -- NDesk.Options passes unmatched
+                    // long/"/"-style options through as plain positional args instead.
+                    Console.Write("{0}: ", GetExecutableName());
+                    Console.WriteLine("unrecognized option `{0}'.", badOption);
+                    Console.WriteLine();
+                    showHelp = true;
+                }
             }
 
             if (extras.Count < 1 || extras.Count > 2 || showHelp == true)
             {
                 Console.WriteLine("Usage: {0} [OPTIONS]+ input_directory [output_archive]", GetExecutableName());
-                Console.WriteLine("Pack directory into an archive.");
+                Console.WriteLine();
+                Console.WriteLine("Packs input_directory (or the bigfile.xml manifest inside it) into a new");
+                Console.WriteLine("multi-part bigfile archive. output_archive defaults to '<input_directory>.000'");
+                Console.WriteLine("in the current directory; only the '.000' part is named after output_archive,");
+                Console.WriteLine("additional parts ('.001', '.002', ...) are created alongside it as needed.");
                 Console.WriteLine();
                 Console.WriteLine("Options:");
                 options.WriteOptionDescriptions(Console.Out);
@@ -90,6 +121,13 @@ namespace Gibbed.TombRaider.Pack
                 {
                     inputPath = testPath;
                 }
+            }
+
+            if (Directory.Exists(inputPath) == false && File.Exists(inputPath) == false)
+            {
+                Console.WriteLine("Could not find input directory or manifest: '{0}'", inputPath);
+                Console.WriteLine("Expected either a directory containing 'bigfile.xml', or a direct path to a manifest file.");
+                return;
             }
 
             var outdir = Path.GetDirectoryName(outputPath);
@@ -178,11 +216,26 @@ namespace Gibbed.TombRaider.Pack
 
             var entryBigFile = 0u;
 
+            long current = 0;
+            long total = entries.Count;
+            int lastPercent = -1;
+
             foreach (var entry in entries)
             {
+                current++;
+
                 if (verbose == true)
                 {
                     Console.WriteLine(Path.GetFileName(entry.Path));
+                }
+                else
+                {
+                    int percent = total > 0 ? (int)((current * 100) / total) : 100;
+                    if (percent != lastPercent)
+                    {
+                        Console.Write("\rPacking... {0,3}% ({1}/{2})", percent, current, total);
+                        lastPercent = percent;
+                    }
                 }
 
                 using (var input = File.OpenRead(entry.Path))
@@ -228,6 +281,11 @@ namespace Gibbed.TombRaider.Pack
 
                     localOffset += blockCount;
                 }
+            }
+
+            if (verbose == false)
+            {
+                Console.WriteLine();
             }
 
             if (data != null)

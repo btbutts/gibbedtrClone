@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using NDesk.Options;
@@ -40,6 +41,12 @@ namespace Gibbed.TombRaider.DRMEdit
             return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
         }
 
+        private static bool LooksLikeOption(string arg)
+        {
+            return string.IsNullOrEmpty(arg) == false &&
+                (arg[0] == '-' || arg[0] == '/');
+        }
+
         [STAThread]
         public static void Main(string[] args)
         {
@@ -49,12 +56,13 @@ namespace Gibbed.TombRaider.DRMEdit
             {
                 {
                     "h|help",
-                    "show this message and exit", 
+                    "show this message and exit",
                     v => showHelp = v != null
                 },
             };
 
-            List<string> extras;
+            List<string> extras = new List<string>();
+            string parseError = null;
 
             try
             {
@@ -62,16 +70,47 @@ namespace Gibbed.TombRaider.DRMEdit
             }
             catch (OptionException e)
             {
+                // Option-parsing error (missing value, unknown option, etc.) -- show the same help as -h/--help.
+                parseError = e.Message;
+                showHelp = true;
+            }
+
+            if (showHelp == false)
+            {
+                var badOption = extras.FirstOrDefault(a => LooksLikeOption(a));
+                if (badOption != null)
+                {
+                    // Not every unrecognized flag throws -- NDesk.Options passes unmatched
+                    // long/"/"-style options through as plain positional args instead.
+                    parseError = string.Format("unrecognized option `{0}'.", badOption);
+                    showHelp = true;
+                }
+            }
+
+            if (showHelp == true)
+            {
                 var sb = new StringBuilder();
-                sb.AppendFormat("{0}: ", GetExecutableName());
-                sb.AppendLine(e.Message);
-                sb.AppendFormat("Try `{0} --help' for more information.", GetExecutableName());
+                if (parseError != null)
+                {
+                    sb.AppendFormat("{0}: {1}", GetExecutableName(), parseError);
+                    sb.AppendLine();
+                    sb.AppendLine();
+                }
+                sb.AppendFormat("Usage: {0} [OPTIONS]+ [file ...]", GetExecutableName());
                 sb.AppendLine();
+                sb.AppendLine("Opens the DRM file browser/editor. Any extra arguments are opened as");
+                sb.AppendLine("individual DRM/resource files on startup.");
+                sb.AppendLine();
+                sb.AppendLine("Options:");
+                using (var writer = new StringWriter(sb))
+                {
+                    options.WriteOptionDescriptions(writer);
+                }
                 MessageBox.Show(
                     sb.ToString(),
                     GetExecutableName(),
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    parseError != null ? MessageBoxIcon.Error : MessageBoxIcon.Information);
                 return;
             }
 

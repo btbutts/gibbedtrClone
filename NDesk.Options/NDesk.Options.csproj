@@ -38,7 +38,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\bin_tr\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;LINQ NDESK_OPTIONS</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NDESK_OPTIONS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
@@ -48,7 +48,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\bin_tr_release\</OutputPath>
-    <DefineConstants>TRACE;LINQ NDESK_OPTIONS</DefineConstants>
+    <DefineConstants>TRACE;NDESK_OPTIONS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
