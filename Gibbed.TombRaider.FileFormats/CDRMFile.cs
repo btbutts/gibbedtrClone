@@ -26,8 +26,8 @@
 
 using System;
 using System.IO;
+using System.IO.Compression;
 using Gibbed.IO;
-using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 
 namespace Gibbed.TombRaider.FileFormats
 {
@@ -135,7 +135,7 @@ namespace Gibbed.TombRaider.FileFormats
                     }
                     else if (block.Type == 2)
                     {
-                        var zlib = new InflaterInputStream(buffer);
+                        var zlib = new ZLibStream(buffer, CompressionMode.Decompress);
                         output.Seek(offset, SeekOrigin.Begin);
                         output.WriteFromStream(zlib, block.UncompressedSize);
                         offset += block.UncompressedSize.Align(16);

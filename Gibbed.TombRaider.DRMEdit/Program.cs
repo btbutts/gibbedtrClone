@@ -50,6 +50,9 @@ namespace Gibbed.TombRaider.DRMEdit
         [STAThread]
         public static void Main(string[] args)
         {
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+            Application.SetColorMode(SystemColorMode.System);
+
             bool showHelp = false;
 
             var options = new OptionSet()

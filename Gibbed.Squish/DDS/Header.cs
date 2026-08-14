@@ -88,17 +88,11 @@ namespace Gibbed.Squish.DDS
             this.PitchOrLinearSize = input.ReadValueU32(endian);
             this.Depth = input.ReadValueU32(endian);
             this.MipMapCount = input.ReadValueU32(endian);
-            if (input.Read(this.Reserved1, 0, this.Reserved1.Length) != this.Reserved1.Length)
-            {
-                throw new EndOfStreamException();
-            }
+            input.ReadExactly(this.Reserved1, 0, this.Reserved1.Length);
             this.PixelFormat.Deserialize(input, endian);
             this.SurfaceFlags = input.ReadValueU32(endian);
             this.CubemapFlags = input.ReadValueU32(endian);
-            if (input.Read(this.Reserved2, 0, this.Reserved2.Length) != this.Reserved2.Length)
-            {
-                throw new EndOfStreamException();
-            }
+            input.ReadExactly(this.Reserved2, 0, this.Reserved2.Length);
         }
     }
 }

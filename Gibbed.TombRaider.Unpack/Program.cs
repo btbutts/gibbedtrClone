@@ -24,11 +24,11 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Xml;
 using Gibbed.CrystalDynamics.FileFormats;
 using Gibbed.IO;
-using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using NDesk.Options;
 using Big = Gibbed.CrystalDynamics.FileFormats.Big;
 
@@ -356,7 +356,7 @@ namespace Gibbed.TombRaider.Unpack
 
                                         if (compressionType == CompressionType.Zlib)
                                         {
-                                            var zlib = new InflaterInputStream(data);
+                                            var zlib = new ZLibStream(data, CompressionMode.Decompress);
                                             read = zlib.Read(guess, 0, (int)Math.Min(
                                                 entry.UncompressedSize, guess.Length));
                                         }
@@ -448,7 +448,7 @@ namespace Gibbed.TombRaider.Unpack
                                     {
                                         using (var temp = data.ReadToMemoryStream(entry.CompressedSize))
                                         {
-                                            var zlib = new InflaterInputStream(temp);
+                                            var zlib = new ZLibStream(temp, CompressionMode.Decompress);
                                             output.WriteFromStream(zlib, entry.UncompressedSize);
                                         }
                                     }

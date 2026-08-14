@@ -102,10 +102,7 @@ namespace Gibbed.DeusEx3.FileFormats
                     }
 
                     var buffer = new byte[size];
-                    if (data.Read(buffer, 0, buffer.Length) != buffer.Length)
-                    {
-                        throw new EndOfStreamException();
-                    }
+                    data.ReadExactly(buffer, 0, buffer.Length);
 
                     this.Mipmaps.Add(new PCD9.Mipmap()
                         {

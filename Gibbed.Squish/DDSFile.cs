@@ -298,10 +298,7 @@ namespace Gibbed.Squish
                 }
 
 				var pixelData = new byte[rowPitch * this.Header.Height];
-                if (input.Read(pixelData, 0, pixelData.Length) != pixelData.Length)
-                {
-                    throw new EndOfStreamException();
-                }
+                input.ReadExactly(pixelData, 0, pixelData.Length);
 
 				this._PixelData = new byte[this.Header.Width * this.Header.Height * 4];
 

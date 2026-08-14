@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Xml.XPath;
 using Gibbed.CrystalDynamics.FileFormats;
@@ -52,6 +53,7 @@ namespace Gibbed.TombRaider.Pack
         public static void Main(string[] args)
         {
             bool verbose = false;
+            bool compress = false;
             bool showHelp = false;
 
             var options = new OptionSet()
@@ -60,6 +62,13 @@ namespace Gibbed.TombRaider.Pack
                     "v|verbose",
                     "list every packed file as it's written; without this, a percentage-complete counter is shown instead",
                     v => verbose = v != null
+                },
+                {
+                    "z|compress",
+                    "zlib-compress each file before writing it, keeping the compressed form only when it's smaller "
+                        + "(reverses what Gibbed.TombRaider.Unpack decompresses); without this, files are always "
+                        + "written uncompressed, matching prior behavior",
+                    v => compress = v != null
                 },
                 {
                     "h|help",
@@ -240,12 +249,51 @@ namespace Gibbed.TombRaider.Pack
 
                 using (var input = File.OpenRead(entry.Path))
                 {
-                    var length = (uint)input.Length;
+                    var rawLength = (uint)input.Length;
+
+                    Stream sourceStream = input;
+                    var length = rawLength;
+                    uint compressedSize = 0;
+                    MemoryStream compressedBuffer = null;
+
+                    if (compress == true && rawLength > 0)
+                    {
+                        compressedBuffer = new MemoryStream();
+                        using (var zlib = new ZLibStream(compressedBuffer, CompressionLevel.SmallestSize, leaveOpen: true))
+                        {
+                            input.CopyTo(zlib);
+                        }
+                        input.Position = 0;
+
+                        if (compressedBuffer.Length < rawLength)
+                        {
+                            compressedSize = (uint)compressedBuffer.Length;
+                            length = compressedSize;
+                            compressedBuffer.Position = 0;
+                            sourceStream = compressedBuffer;
+                        }
+                        else
+                        {
+                            compressedBuffer.Dispose();
+                            compressedBuffer = null;
+                        }
+                    }
 
                     var blockCount = length.Align(2048) / 2048;
 
                     if (blockCount > maxBlocksPerFile)
                     {
+                        // Too big even after (optional) compression -- truncating compressed
+                        // bytes would produce an undecodable stream, so always fall back to a
+                        // raw truncated write here, matching the pre-compression behavior.
+                        if (compressedBuffer != null)
+                        {
+                            compressedBuffer.Dispose();
+                            compressedBuffer = null;
+                            sourceStream = input;
+                            compressedSize = 0;
+                        }
+
                         Console.WriteLine("'{0}' can't fit in the archive! (writing as much as possible)", entry.Path);
                         blockCount = maxBlocksPerFile;
                         length = blockCount * 2048;
@@ -273,13 +321,19 @@ namespace Gibbed.TombRaider.Pack
                     }
 
                     data.Seek(localOffset * 2048, SeekOrigin.Begin);
-                    data.WriteFromStream(input, length);
+                    data.WriteFromStream(sourceStream, length);
 
-                    entry.UncompressedSize = length;
+                    entry.UncompressedSize = rawLength;
+                    entry.CompressedSize = compressedSize;
                     entry.Offset = globalOffset + localOffset;
                     big.Entries.Add(entry);
 
                     localOffset += blockCount;
+
+                    if (compressedBuffer != null)
+                    {
+                        compressedBuffer.Dispose();
+                    }
                 }
             }
 

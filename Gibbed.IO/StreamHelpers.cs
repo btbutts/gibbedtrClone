@@ -46,10 +46,7 @@ namespace Gibbed.IO
             while (left > 0)
             {
                 var block = (int)(Math.Min(left, data.Length));
-                if (stream.Read(data, 0, block) != block)
-                {
-                    throw new EndOfStreamException();
-                }
+                stream.ReadExactly(data, 0, block);
                 memory.Write(data, 0, block);
                 left -= block;
             }
@@ -70,10 +67,7 @@ namespace Gibbed.IO
             while (left > 0)
             {
                 var block = (int)(Math.Min(left, data.Length));
-                if (input.Read(data, 0, block) != block)
-                {
-                    throw new EndOfStreamException();
-                }
+                input.ReadExactly(data, 0, block);
                 stream.Write(data, 0, block);
                 left -= block;
             }

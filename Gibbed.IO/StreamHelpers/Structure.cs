@@ -33,10 +33,7 @@ namespace Gibbed.IO
             var structureSize = Marshal.SizeOf(typeof(T));
             var buffer = new byte[structureSize];
 
-            if (stream.Read(buffer, 0, structureSize) != structureSize)
-            {
-                throw new EndOfStreamException("could not read all of data for structure");
-            }
+            stream.ReadExactly(buffer, 0, structureSize);
 
             var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
 
@@ -52,10 +49,7 @@ namespace Gibbed.IO
             var structureSize = Marshal.SizeOf(typeof(T));
             var buffer = new byte[Math.Max(structureSize, size)];
 
-            if (stream.Read(buffer, 0, size) != size)
-            {
-                throw new EndOfStreamException("could not read all of data for structure");
-            }
+            stream.ReadExactly(buffer, 0, size);
 
             var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
 
