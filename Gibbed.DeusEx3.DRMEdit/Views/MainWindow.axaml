@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
+        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        x:Class="Gibbed.DeusEx3.DRMEdit.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1100" Height="750"
+        Title="DRM Editor">
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGesture="Ctrl+O" />
+                <Separator />
+                <MenuItem Header="E_xit" Click="OnExitClick" />
+            </MenuItem>
+            <MenuItem Header="_Windows">
+                <MenuItem Header="C_lose All" Command="{Binding CloseAllCommand}" />
+            </MenuItem>
+        </Menu>
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
+            <Button Content="Open DRM" Command="{Binding OpenCommand}" />
+        </StackPanel>
+
+        <TabControl ItemsSource="{Binding OpenDocuments}"
+                    SelectedItem="{Binding SelectedDocument}">
+            <TabControl.ItemTemplate>
+                <DataTemplate DataType="vm:DocumentTabViewModel">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                        <Button Command="{Binding PopOutCommand}"
+                                Classes="tabPopOut"
+                                ToolTip.Tip="Pop out into its own window">
+                            <materialIcons:MaterialIcon Kind="Export" Width="14" Height="14" />
+                        </Button>
+                        <Button Command="{Binding CloseCommand}"
+                                ToolTip.Tip="Close">
+                            <materialIcons:MaterialIcon Kind="Close" Width="14" Height="14" />
+                        </Button>
+                    </StackPanel>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+        </TabControl>
+    </DockPanel>
+
+    <Window.Styles>
+        <!-- Pop-out button: hidden unless its tab is hovered or selected. -->
+        <Style Selector="TabItem:not(:pointerover):not(:selected) Button.tabPopOut">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+    </Window.Styles>
+
+</Window>

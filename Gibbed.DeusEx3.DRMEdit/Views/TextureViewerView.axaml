@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
+             xmlns:local="using:Gibbed.DeusEx3.DRMEdit.Views"
+             x:Class="Gibbed.DeusEx3.DRMEdit.Views.TextureViewerView"
+             x:DataType="vm:TextureViewerViewModel">
+
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
+            <Button Content="Save To File" Command="{Binding SaveToFileCommand}" />
+            <Separator />
+            <ToggleButton Content="Zoom" IsChecked="{Binding IsZoomed}" />
+            <ToggleButton Content="Show Alpha" IsChecked="{Binding ShowAlpha}" />
+        </StackPanel>
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding InfoText}" Margin="4" />
+
+        <ScrollViewer>
+            <Image Source="{Binding Preview}"
+                   Stretch="{Binding IsZoomed, Converter={x:Static local:BoolToStretchConverter.Instance}}" />
+        </ScrollViewer>
+    </DockPanel>
+
+</UserControl>

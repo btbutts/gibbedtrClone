@@ -1,30 +1,8 @@
-﻿/* Copyright (c) 2011 Rick (rick 'at' gibbed 'dot' us)
- * 
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would
- *    be appreciated but is not required.
- * 
- * 2. Altered source versions must be plainly marked as such, and must not
- *    be misrepresented as being the original software.
- * 
- * 3. This notice may not be removed or altered from any source
- *    distribution.
- */
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Windows.Forms;
+using Avalonia;
 using NDesk.Options;
 
 namespace Gibbed.DeusEx3.DRMEdit
@@ -39,21 +17,19 @@ namespace Gibbed.DeusEx3.DRMEdit
         [STAThread]
         public static void Main(string[] args)
         {
-            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-            Application.SetColorMode(SystemColorMode.System);
-
             bool showHelp = false;
 
             var options = new OptionSet()
             {
                 {
                     "h|help",
-                    "show this message and exit", 
+                    "show this message and exit",
                     v => showHelp = v != null
                 },
             };
 
             List<string> extras;
+            string? errorText = null;
 
             try
             {
@@ -61,22 +37,34 @@ namespace Gibbed.DeusEx3.DRMEdit
             }
             catch (OptionException e)
             {
+                extras = new List<string>();
+
                 var sb = new StringBuilder();
                 sb.AppendFormat("{0}: ", GetExecutableName());
                 sb.AppendLine(e.Message);
                 sb.AppendFormat("Try `{0} --help' for more information.", GetExecutableName());
                 sb.AppendLine();
-                MessageBox.Show(
-                    sb.ToString(),
-                    GetExecutableName(),
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
+                errorText = sb.ToString();
             }
 
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Explorer(extras));
+            // NOTE: matches the original WinForms behavior exactly — showHelp is parsed but
+            // never displayed here either; -h/--help has always been a silent no-op in this
+            // tool (the original Program.cs set showHelp and never read it). Preserved as-is
+            // rather than "fixed" during the Avalonia port, per this stage's rule of porting
+            // Deus Ex 3's actual current behavior, not inventing functionality it never had.
+            _ = showHelp;
+
+            App.StartupFiles = extras;
+            App.HelpText = errorText;
+            App.HelpIsError = true;
+
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
+
+        public static AppBuilder BuildAvaloniaApp()
+            => AppBuilder.Configure<App>()
+                .UsePlatformDetect()
+                .WithInterFont()
+                .LogToTrace();
     }
 }

@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
+        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        x:Class="Gibbed.DeusEx3.DRMEdit.Views.PopOutWindow"
+        x:DataType="vm:DocumentTabViewModel"
+        Width="700" Height="500"
+        Title="{Binding Title}">
+
+    <DockPanel>
+        <Button DockPanel.Dock="Top" HorizontalAlignment="Right" Margin="4"
+                Command="{Binding PopInCommand}"
+                ToolTip.Tip="Dock back into main window">
+            <materialIcons:MaterialIcon Kind="DockWindow" />
+        </Button>
+        <ContentControl Content="{Binding}" />
+    </DockPanel>
+
+</Window>
