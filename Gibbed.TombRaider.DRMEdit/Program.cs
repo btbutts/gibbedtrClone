@@ -1,35 +1,9 @@
-﻿/* Copyright (c) 2011 Rick (rick 'at' gibbed 'dot' us)
- * 
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would
- *    be appreciated but is not required.
- * 
- * 2. Altered source versions must be plainly marked as such, and must not
- *    be misrepresented as being the original software.
- * 
- * 3. This notice may not be removed or altered from any source
- *    distribution.
- */
-
-//-----------------------------------------------------------------------------
-// Additional modifications by sephiroth99
-//-----------------------------------------------------------------------------
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
+using Avalonia;
 using NDesk.Options;
 
 namespace Gibbed.TombRaider.DRMEdit
@@ -50,9 +24,6 @@ namespace Gibbed.TombRaider.DRMEdit
         [STAThread]
         public static void Main(string[] args)
         {
-            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-            Application.SetColorMode(SystemColorMode.System);
-
             bool showHelp = false;
 
             var options = new OptionSet()
@@ -65,7 +36,7 @@ namespace Gibbed.TombRaider.DRMEdit
             };
 
             List<string> extras = new List<string>();
-            string parseError = null;
+            string? parseError = null;
 
             try
             {
@@ -73,7 +44,6 @@ namespace Gibbed.TombRaider.DRMEdit
             }
             catch (OptionException e)
             {
-                // Option-parsing error (missing value, unknown option, etc.) -- show the same help as -h/--help.
                 parseError = e.Message;
                 showHelp = true;
             }
@@ -83,13 +53,12 @@ namespace Gibbed.TombRaider.DRMEdit
                 var badOption = extras.FirstOrDefault(a => LooksLikeOption(a));
                 if (badOption != null)
                 {
-                    // Not every unrecognized flag throws -- NDesk.Options passes unmatched
-                    // long/"/"-style options through as plain positional args instead.
                     parseError = string.Format("unrecognized option `{0}'.", badOption);
                     showHelp = true;
                 }
             }
 
+            string? helpText = null;
             if (showHelp == true)
             {
                 var sb = new StringBuilder();
@@ -109,17 +78,20 @@ namespace Gibbed.TombRaider.DRMEdit
                 {
                     options.WriteOptionDescriptions(writer);
                 }
-                MessageBox.Show(
-                    sb.ToString(),
-                    GetExecutableName(),
-                    MessageBoxButtons.OK,
-                    parseError != null ? MessageBoxIcon.Error : MessageBoxIcon.Information);
-                return;
+                helpText = sb.ToString();
             }
 
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Explorer(extras));
+            App.StartupFiles = extras;
+            App.HelpText = helpText;
+            App.HelpIsError = parseError != null;
+
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
+
+        public static AppBuilder BuildAvaloniaApp()
+            => AppBuilder.Configure<App>()
+                .UsePlatformDetect()
+                .WithInterFont()
+                .LogToTrace();
     }
 }

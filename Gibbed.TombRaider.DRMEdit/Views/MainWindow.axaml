@@ -1,0 +1,7 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Gibbed.TombRaider.DRMEdit.Views.MainWindow"
+        Width="1000" Height="700"
+        Title="Tomb Raider DRM Editor">
+    <TextBlock Text="Scaffold OK" HorizontalAlignment="Center" VerticalAlignment="Center" />
+</Window>
