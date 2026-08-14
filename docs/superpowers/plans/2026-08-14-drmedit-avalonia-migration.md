@@ -288,6 +288,7 @@ Create `Gibbed.TombRaider.DRMEdit/App.axaml`:
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Gibbed.TombRaider.DRMEdit.App"
              xmlns:local="using:Gibbed.TombRaider.DRMEdit"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              RequestedThemeVariant="Default">
 
     <Application.DataTemplates>
@@ -296,6 +297,7 @@ Create `Gibbed.TombRaider.DRMEdit/App.axaml`:
 
     <Application.Styles>
         <FluentTheme />
+        <materialIcons:MaterialIconStyles />
     </Application.Styles>
 
 </Application>
