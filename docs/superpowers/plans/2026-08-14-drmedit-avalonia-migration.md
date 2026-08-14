@@ -873,7 +873,9 @@ Create `Gibbed.TombRaider.DRMEdit/Views/DemoDocumentView.axaml`:
 ```xml
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Gibbed.TombRaider.DRMEdit.Views.DemoDocumentView">
+             xmlns:vm="using:Gibbed.TombRaider.DRMEdit.ViewModels"
+             x:Class="Gibbed.TombRaider.DRMEdit.Views.DemoDocumentView"
+             x:DataType="vm:DemoDocumentViewModel">
     <TextBlock Text="{Binding Title}" HorizontalAlignment="Center" VerticalAlignment="Center" />
 </UserControl>
 ```
@@ -921,9 +923,9 @@ Replace `Gibbed.TombRaider.DRMEdit/Views/MainWindow.axaml`:
             </MenuItem>
         </Menu>
 
-        <ToolBar DockPanel.Dock="Top">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
             <Button Content="Open DRM" Command="{Binding OpenCommand}" />
-        </ToolBar>
+        </StackPanel>
 
         <TabControl ItemsSource="{Binding OpenDocuments}"
                     SelectedItem="{Binding SelectedDocument}">
@@ -986,7 +988,7 @@ namespace Gibbed.TombRaider.DRMEdit.Views
             };
         }
 
-        private void OnExitClick(object sender, System.EventArgs e)
+        private void OnExitClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
             Close();
         }
@@ -1250,12 +1252,12 @@ Create `Gibbed.TombRaider.DRMEdit/Views/FileViewerView.axaml`:
     </UserControl.Resources>
 
     <DockPanel>
-        <ToolBar DockPanel.Dock="Top">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
             <Button Content="Save DRM" Command="{Binding SaveDrmCommand}" />
             <Separator />
             <Button Content="View Section" Command="{Binding ViewSectionCommand}" />
             <Button Content="View Section Raw" Command="{Binding ViewSectionRawCommand}" />
-        </ToolBar>
+        </StackPanel>
 
         <TreeView ItemsSource="{Binding Sections}"
                   SelectedItem="{Binding SelectedSection}"
@@ -1474,10 +1476,10 @@ Create `Gibbed.TombRaider.DRMEdit/Views/RawViewerView.axaml`:
              x:DataType="vm:RawViewerViewModel">
 
     <DockPanel>
-        <ToolBar DockPanel.Dock="Top">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
             <Button Content="Load From File" Command="{Binding LoadFromFileCommand}" />
             <Button Content="Save To File" Command="{Binding SaveToFileCommand}" />
-        </ToolBar>
+        </StackPanel>
 
         <Grid RowDefinitions="200,4,*">
             <hex:HexEditor Grid.Row="0" Document="{Binding HexDocument}" />
@@ -1818,7 +1820,7 @@ Create `Gibbed.TombRaider.DRMEdit/Views/TextureViewerView.axaml`:
              x:DataType="vm:TextureViewerViewModel">
 
     <DockPanel>
-        <ToolBar DockPanel.Dock="Top">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
             <Button Content="Save" Command="{Binding SaveCommand}" />
             <Separator />
             <Button Content="Load From File" Command="{Binding LoadFromFileCommand}" />
@@ -1826,7 +1828,7 @@ Create `Gibbed.TombRaider.DRMEdit/Views/TextureViewerView.axaml`:
             <Separator />
             <ToggleButton Content="Zoom" IsChecked="{Binding IsZoomed}" />
             <ToggleButton Content="Show Alpha" IsChecked="{Binding ShowAlpha}" />
-        </ToolBar>
+        </StackPanel>
 
         <TextBlock DockPanel.Dock="Bottom" Text="{Binding InfoText}" Margin="4" />
 
@@ -2175,13 +2177,13 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
 Create `Gibbed.DeusEx3.DRMEdit/Views/FileViewerView.axaml` — same tree/icon structure as Tomb Raider's (Task 3 Step 5), but the toolbar differs:
 
 ```xml
-        <ToolBar DockPanel.Dock="Top">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
             <Button Content="Save DRM" IsEnabled="False" ToolTip.Tip="Not supported for Deus Ex 3 DRM files" />
             <ComboBox ItemsSource="{Binding TypeFilterOptions}" SelectedItem="{Binding SelectedTypeFilter}" Width="140" />
             <Separator />
             <Button Content="View Section" Command="{Binding ViewSectionCommand}" />
             <Button Content="View Section Raw" Command="{Binding ViewSectionRawCommand}" />
-        </ToolBar>
+        </StackPanel>
 ```
 
 (Rest of the file — icon resources/converter, `TreeView`, code-behind — identical in shape to Task 3 Step 5, `Gibbed.DeusEx3.DRMEdit` namespace and asset URIs.)
@@ -2345,15 +2347,15 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
 
 - [ ] **Step 2: Create TextureViewerView — same layout as Tomb Raider's minus the Save/Load buttons**
 
-Same as Task 6 Step 2's `.axaml`/`.axaml.cs`, but the `ToolBar` only has:
+Same as Task 6 Step 2's `.axaml`/`.axaml.cs`, but the toolbar `StackPanel` only has:
 
 ```xml
-        <ToolBar DockPanel.Dock="Top">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
             <Button Content="Save To File" Command="{Binding SaveToFileCommand}" />
             <Separator />
             <ToggleButton Content="Zoom" IsChecked="{Binding IsZoomed}" />
             <ToggleButton Content="Show Alpha" IsChecked="{Binding ShowAlpha}" />
-        </ToolBar>
+        </StackPanel>
 ```
 
 - [ ] **Step 3: Build**

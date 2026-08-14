@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Gibbed.TombRaider.DRMEdit.ViewModels;
 using Gibbed.TombRaider.DRMEdit.Views;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
@@ -30,7 +31,17 @@ namespace Gibbed.TombRaider.DRMEdit
                 }
                 else
                 {
-                    desktop.MainWindow = new MainWindow(StartupFiles);
+                    var mainWindowViewModel = new MainWindowViewModel(
+                        new Services.AvaloniaFilePickerService(),
+                        new Services.PopOutWindowService());
+
+                    var mainWindow = new MainWindow(StartupFiles)
+                    {
+                        DataContext = mainWindowViewModel,
+                    };
+                    mainWindowViewModel.GetTopLevel = () => mainWindow;
+
+                    desktop.MainWindow = mainWindow;
                 }
             }
 
