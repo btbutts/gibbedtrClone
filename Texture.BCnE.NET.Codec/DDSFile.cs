@@ -23,9 +23,10 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Runtime.Versioning;
 using Gibbed.IO;
 
-namespace Gibbed.Squish
+namespace Texture.BCnE.NET.Codec
 {
 	public class DDSFile
 	{
@@ -53,26 +54,31 @@ namespace Gibbed.Squish
 		{
 		}
 
+        [SupportedOSPlatform("windows")]
         public Image Image()
         {
             return this.Image(true, true, true, false);
         }
 
+        [SupportedOSPlatform("windows")]
         public Image Image(bool red)
         {
             return this.Image(true, false, false, false);
         }
 
+        [SupportedOSPlatform("windows")]
         public Image Image(bool red, bool green)
         {
             return this.Image(true, true, false, false);
         }
 
+        [SupportedOSPlatform("windows")]
         public Image Image(bool red, bool green, bool blue)
         {
             return this.Image(true, true, true, false);
         }
 
+        [SupportedOSPlatform("windows")]
         public Image Image(bool red, bool green, bool blue, bool alpha)
         {
             int width = this.Width;
@@ -129,25 +135,25 @@ namespace Gibbed.Squish
 
             if ((this.Header.PixelFormat.Flags & DDS.PixelFormatFlags.FourCC) != 0)
             {
-                var squishFlags = Native.Flags.None;
+                var squishFlags = TextureCodec.Flags.None;
 
 				switch (this.Header.PixelFormat.FourCC)
 				{
                     case 0x31545844: // "DXT1"
                     {
-                        squishFlags |= Native.Flags.DXT1;
+                        squishFlags |= TextureCodec.Flags.DXT1;
                         break;
                     }
 
                     case 0x33545844: // "DXT3"
                     {
-                        squishFlags |= Native.Flags.DXT3;
+                        squishFlags |= TextureCodec.Flags.DXT3;
                         break;
                     }
 
                     case 0x35545844: // "DXT5"
                     {
-                        squishFlags |= Native.Flags.DXT5;
+                        squishFlags |= TextureCodec.Flags.DXT5;
                         break;
                     }
 
@@ -159,14 +165,14 @@ namespace Gibbed.Squish
 
 				// Compute size of compressed block area
 				int blockCount = ((this.Width + 3) / 4) * ((this.Height + 3) / 4);
-				int blockSize = ((squishFlags & Native.Flags.DXT1) != 0) ? 8 : 16;
+				int blockSize = ((squishFlags & TextureCodec.Flags.DXT1) != 0) ? 8 : 16;
 				
 				// Allocate room for compressed blocks, and read data into it.
 				var compressedBlocks = new byte[blockCount * blockSize];
                 input.ReadExactly(compressedBlocks, 0, compressedBlocks.Length);
 
 				// Now decompress..
-				this._PixelData = Native.DecompressImage(
+				this._PixelData = TextureCodec.DecompressImage(
                     compressedBlocks, this.Width, this.Height, squishFlags);
 			}
 			else

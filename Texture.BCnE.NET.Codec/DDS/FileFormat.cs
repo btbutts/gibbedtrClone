@@ -20,12 +20,21 @@
  *    distribution.
  */
 
-namespace Gibbed.Squish.DDS
+namespace Texture.BCnE.NET.Codec.DDS
 {
-    public enum SurfaceFlags
+    public enum FileFormat
     {
-        Texture = 0x00001000,	// DDSCAPS_TEXTURE
-        Mipmap = 0x00400008,	// DDSCAPS_COMPLEX | DDSCAPS_MIPMAP
-        Cubemap = 0x00000008,	// DDSCAPS_COMPLEX
-    }
+        DXT1,
+        DXT3,
+        DXT5,
+        A8R8G8B8,
+        X8R8G8B8,
+        A8B8G8R8,
+        X8B8G8R8,
+        A1R5G5B5,
+        A4R4G4B4,
+        R8G8B8,
+        R5G6B5,
+        INVALID,
+    };
 }

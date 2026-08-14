@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gibbed.DeusEx3.Pack", "Gibb
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gibbed.DeusEx3.DRMEdit", "Gibbed.DeusEx3.DRMEdit\Gibbed.DeusEx3.DRMEdit.csproj", "{7189FA0A-DE18-4CB8-B058-12E5449A4373}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gibbed.Squish", "Gibbed.Squish\Gibbed.Squish.csproj", "{242D0738-AA4C-4C9C-A218-891A8F55559C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Texture.BCnE.NET.Codec", "Texture.BCnE.NET.Codec\Texture.BCnE.NET.Codec.csproj", "{242D0738-AA4C-4C9C-A218-891A8F55559C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gibbed.DeusEx3.Demux", "Gibbed.DeusEx3.Demux\Gibbed.DeusEx3.Demux.csproj", "{0A55F475-BD38-4184-AF11-DC5CFA3E7E3A}"
 EndProject

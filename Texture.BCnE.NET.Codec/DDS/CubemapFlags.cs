@@ -20,7 +20,7 @@
  *    distribution.
  */
 
-namespace Gibbed.Squish.DDS
+namespace Texture.BCnE.NET.Codec.DDS
 {
     public enum CubemapFlags
     {

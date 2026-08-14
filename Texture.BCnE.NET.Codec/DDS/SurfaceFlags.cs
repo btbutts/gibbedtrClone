@@ -20,10 +20,12 @@
  *    distribution.
  */
 
-namespace Gibbed.Squish.DDS
+namespace Texture.BCnE.NET.Codec.DDS
 {
-    public enum VolumeFlags
+    public enum SurfaceFlags
     {
-        Volume = 0x00200000,	// DDSCAPS2_VOLUME
+        Texture = 0x00001000,	// DDSCAPS_TEXTURE
+        Mipmap = 0x00400008,	// DDSCAPS_COMPLEX | DDSCAPS_MIPMAP
+        Cubemap = 0x00000008,	// DDSCAPS_COMPLEX
     }
 }

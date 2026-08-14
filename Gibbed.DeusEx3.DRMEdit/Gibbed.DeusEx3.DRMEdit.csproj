@@ -24,7 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Gibbed.DeusEx3.FileFormats\Gibbed.DeusEx3.FileFormats.csproj" />
     <ProjectReference Include="..\Gibbed.IO\Gibbed.IO.csproj" />
-    <ProjectReference Include="..\Gibbed.Squish\Gibbed.Squish.csproj" />
+    <ProjectReference Include="..\Texture.BCnE.NET.Codec\Texture.BCnE.NET.Codec.csproj" />
     <ProjectReference Include="..\NDesk.Options\NDesk.Options.csproj" />
   </ItemGroup>
 

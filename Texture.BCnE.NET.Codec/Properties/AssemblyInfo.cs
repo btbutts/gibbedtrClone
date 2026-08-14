@@ -20,24 +20,17 @@
  *    distribution.
  */
 
-//-----------------------------------------------------------------------------
-// Additional modifications by sephiroth99
-//-----------------------------------------------------------------------------
-
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 
-[assembly: SupportedOSPlatform("windows")]
-
-// General Information about an assembly is controlled through the following 
+// General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Gibbed.TombRaider.DRMEdit")]
+[assembly: AssemblyTitle("Texture.BCnE.NET.Codec")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Gibbed.TombRaider.DRMEdit")]
+[assembly: AssemblyProduct("Texture.BCnE.NET.Codec")]
 [assembly: AssemblyCopyright("Copyright © Gibbed 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -48,7 +41,7 @@ using System.Runtime.Versioning;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("011ac9cc-86da-48a3-9d63-2da472ebf893")]
+[assembly: Guid("b6489ae4-cd56-46c4-9a8f-8e3c3b85f99e")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -60,5 +53,5 @@ using System.Runtime.Versioning;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]

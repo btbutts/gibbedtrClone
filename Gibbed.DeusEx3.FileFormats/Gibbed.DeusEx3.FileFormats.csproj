@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Gibbed.DeusEx3.FileFormats</RootNamespace>
     <AssemblyName>Gibbed.DeusEx3.FileFormats</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

@@ -24,7 +24,7 @@ using System;
 using System.IO;
 using Gibbed.IO;
 
-namespace Gibbed.Squish.DDS
+namespace Texture.BCnE.NET.Codec.DDS
 {
     public class Header
     {
