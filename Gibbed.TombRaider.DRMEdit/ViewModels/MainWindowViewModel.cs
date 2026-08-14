@@ -92,8 +92,7 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
 
         public void OpenFile(string path)
         {
-            // FileViewerViewModel doesn't exist until Task 3 — DemoDocumentViewModel stands in for it here.
-            AddDocument(new DemoDocumentViewModel(path));
+            AddDocument(new FileViewerViewModel(this, path));
         }
 
         [RelayCommand]

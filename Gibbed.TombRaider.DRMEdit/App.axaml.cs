@@ -14,6 +14,7 @@ namespace Gibbed.TombRaider.DRMEdit
         public static List<string> StartupFiles { get; set; } = new List<string>();
         public static string? HelpText { get; set; }
         public static bool HelpIsError { get; set; }
+        public static Services.IFilePickerService PickerService { get; private set; } = null!;
 
         public override void Initialize()
         {
@@ -31,9 +32,8 @@ namespace Gibbed.TombRaider.DRMEdit
                 }
                 else
                 {
-                    var mainWindowViewModel = new MainWindowViewModel(
-                        new Services.AvaloniaFilePickerService(),
-                        new Services.PopOutWindowService());
+                    PickerService = new Services.AvaloniaFilePickerService();
+                    var mainWindowViewModel = new MainWindowViewModel(PickerService, new Services.PopOutWindowService());
 
                     var mainWindow = new MainWindow(StartupFiles)
                     {

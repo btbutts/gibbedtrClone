@@ -1,7 +1,0 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:Gibbed.TombRaider.DRMEdit.ViewModels"
-             x:Class="Gibbed.TombRaider.DRMEdit.Views.DemoDocumentView"
-             x:DataType="vm:DemoDocumentViewModel">
-    <TextBlock Text="{Binding Title}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-</UserControl>

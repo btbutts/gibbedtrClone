@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace Gibbed.TombRaider.DRMEdit.Views
 {
-    public partial class DemoDocumentView : UserControl
+    public partial class RawViewerView : UserControl
     {
-        public DemoDocumentView()
+        public RawViewerView()
         {
             InitializeComponent();
         }
