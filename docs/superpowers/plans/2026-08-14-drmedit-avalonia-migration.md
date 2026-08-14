@@ -1661,19 +1661,18 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             var bitmap = new WriteableBitmap(
                 new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Unpremul);
 
+            var pixels = ShowAlpha == true ? data : (byte[])data.Clone();
+            if (ShowAlpha == false)
+            {
+                for (var i = 3; i < pixels.Length; i += 4)
+                {
+                    pixels[i] = 0xFF;
+                }
+            }
+
             using (var buffer = bitmap.Lock())
             {
-                unsafe
-                {
-                    var dst = (byte*)buffer.Address;
-                    for (int i = 0; i < width * height; i++)
-                    {
-                        dst[i * 4 + 0] = data[i * 4 + 0];
-                        dst[i * 4 + 1] = data[i * 4 + 1];
-                        dst[i * 4 + 2] = data[i * 4 + 2];
-                        dst[i * 4 + 3] = ShowAlpha == false ? (byte)0xFF : data[i * 4 + 3];
-                    }
-                }
+                System.Runtime.InteropServices.Marshal.Copy(pixels, 0, buffer.Address, pixels.Length);
             }
 
             Preview = bitmap;
@@ -1706,7 +1705,7 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
 
             using (var output = System.IO.File.Create(savePath))
             {
-                Preview.Save(output);
+                Preview.Save(output, new PngBitmapEncoderOptions());
             }
         }
 
@@ -2299,19 +2298,18 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
             var bitmap = new WriteableBitmap(
                 new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Unpremul);
 
+            var pixels = ShowAlpha == true ? data : (byte[])data.Clone();
+            if (ShowAlpha == false)
+            {
+                for (var i = 3; i < pixels.Length; i += 4)
+                {
+                    pixels[i] = 0xFF;
+                }
+            }
+
             using (var buffer = bitmap.Lock())
             {
-                unsafe
-                {
-                    var dst = (byte*)buffer.Address;
-                    for (int i = 0; i < width * height; i++)
-                    {
-                        dst[i * 4 + 0] = data[i * 4 + 0];
-                        dst[i * 4 + 1] = data[i * 4 + 1];
-                        dst[i * 4 + 2] = data[i * 4 + 2];
-                        dst[i * 4 + 3] = ShowAlpha == false ? (byte)0xFF : data[i * 4 + 3];
-                    }
-                }
+                System.Runtime.InteropServices.Marshal.Copy(pixels, 0, buffer.Address, pixels.Length);
             }
 
             Preview = bitmap;
@@ -2338,7 +2336,7 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
 
             using (var output = System.IO.File.Create(savePath))
             {
-                Preview.Save(output);
+                Preview.Save(output, new PngBitmapEncoderOptions());
             }
         }
     }
