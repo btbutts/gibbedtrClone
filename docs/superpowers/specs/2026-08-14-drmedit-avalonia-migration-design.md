@@ -27,10 +27,21 @@ package (original, `.Net5`, or `.Net8` — all checked against real source) is c
 anyway, so there was never a version of "just swap the hex control" that solved the actual
 problem.
 
-**Out of scope for this stage:** `Gibbed.Squish`'s native `squish_32.dll`/`squish_64.dll`
-P/Invoke texture decode stays exactly as-is (Windows-only for now — that's Stage 3 item 8).
-Extracting a headless/CLI invocation surface for the future Python wrapper is Stage 3 item
-9, not here.
+**Revised during implementation (Task 1):** `Gibbed.Squish`'s native `squish_32.dll`/
+`squish_64.dll` P/Invoke was originally meant to stay untouched this stage (Stage 3 item 8,
+deferred). That turned out to force `Gibbed.TombRaider.DRMEdit` to stay `net10.0-windows`
+for the whole stage regardless of anything else — NuGet's TFM compatibility only allows a
+`net10.0-windows`-tagged project to consume a plain `net10.0` one, never the reverse, and
+DRMEdit depends on `Gibbed.Squish` directly. The user did not want DRMEdit stuck on
+`net10.0-windows` as a "temporary" state. Resolution: `Gibbed.Squish` is renamed
+`Texture.BCnE.NET.Codec` and its native P/Invoke replaced by the managed `BCnEncoder.Net`
+package (Stage 3 item 8, done here instead of later) — same public API, so nothing
+downstream in this spec's component mapping changes except the namespace. `Gibbed.IO`,
+`Gibbed.CrystalDynamics.FileFormats`, `Gibbed.TombRaider.FileFormats`,
+`Gibbed.DeusEx3.FileFormats`, and `NDesk.Options` were retargeted to plain `net10.0` in the
+same pass (Stage 3 items 1-3), since they were the same blocker one dependency layer down.
+Extracting a headless/CLI invocation surface for the future Python wrapper is still Stage 3
+item 9, not here.
 
 ## Decisions made during brainstorming (with rationale)
 
@@ -113,7 +124,9 @@ dependencies for both: `Avalonia`, `Avalonia.Desktop`, `AvaloniaHex`, `Material.
 | `Explorer` (MDI container, File/Windows menus, toolbar) | `MainWindow` + `MainWindowViewModel`. Windows menu's Cascade/Tile/Arrange Icons dropped (see Decision 1); Close All kept (closes all tabs + all popped-out windows). |
 | `FileViewer` (MDI child, section tree) | Tab content, `FileViewerViewModel`. `entryTreeView` → Avalonia `TreeView`. Per-type icons (`__DRM`/`RenderResource`/`Script`/`Wave`, real embedded bitmaps from `SectionTypeImages.resx`) re-embedded as Avalonia asset images, not redrawn from a generic icon set. `hintLabel` is permanently blank in the current code (set to `""` in the constructor, never touched again) — preserved as-is, not "fixed" into something useful. |
 | `RawViewer` (MDI child, `HexBox`) | Tab content, `RawViewerViewModel`. `SplitContainer` (top: hex view, bottom: info tabs) → Avalonia `GridSplitter` in the same top/bottom arrangement. `hexBox` → `AvaloniaHex.HexEditor`, `Document="{Binding HexDocument}"` where `HexDocument` is `new MemoryBinaryDocument(Data, isReadOnly: true)` — direct match for today's `ReadOnly = true` + `DynamicByteProvider`. Bottom `TabControl`'s second tab (`tabPage2`) is empty/unused in the current code (no controls, default "tabPage2" label) — preserved as an empty tab rather than silently dropped. `loadFromFileButton` is permanently `Enabled = false` today and never enabled anywhere — ported as permanently disabled, same reasoning. |
-| `TextureViewer` (MDI child, `PictureBox`) | Tab content, `TextureViewerViewModel`. `previewPictureBox` → Avalonia `Image` bound to a `WriteableBitmap` built the same way as today's `MakeBitmapFromTrueColor`/etc. (`Marshal.Copy` into a locked bitmap), fed by the same unchanged `Squish.Native.DecompressImage`/`CompressImage` calls. Zoom toggle: `PictureBoxSizeMode.Zoom`→`Image.Stretch="Uniform"`, `.Normal`→`Stretch="None"`; `previewPanel.AutoScroll` → `ScrollViewer`. |
+| `TextureViewer` (MDI child, `PictureBox`) | Tab content, `TextureViewerViewModel`. `previewPictureBox` → Avalonia `Image` bound to a `WriteableBitmap` built the same way as today's `MakeBitmapFromTrueColor`/etc. (`Marshal.Copy` into a locked bitmap), fed by `Texture.BCnE.NET.Codec.TextureCodec.DecompressImage`/`CompressImage` (same method
+signatures as the old `Gibbed.Squish.Native`, now `BCnEncoder.Net`-backed — see "Revised
+during implementation" above). Zoom toggle: `PictureBoxSizeMode.Zoom`→`Image.Stretch="Uniform"`, `.Normal`→`Stretch="None"`; `previewPanel.AutoScroll` → `ScrollViewer`. |
 | `OpenFileDialog`/`SaveFileDialog` | `IStorageProvider` via a new `IFilePickerService` abstraction (doesn't exist today — needed because ViewModels can't reach into a `Window` directly under proper MVVM), one implementation backed by the active window's `StorageProvider`. |
 | `MessageBox.Show` | `MessageBox.Avalonia` package (12.0.0) — Avalonia has no built-in equivalent. |
 | `Application.SetHighDpiMode`/`SetColorMode(SystemColorMode.System)` | Not ported — Avalonia windows are per-monitor-DPI-aware automatically; `Application.RequestedThemeVariant` via Avalonia's `FluentTheme` gives the OS-follows-theme behavior. |
@@ -175,8 +188,8 @@ either way.)
 
 ## Follow-on work (not this stage)
 
-- Stage 3 item 8: `Gibbed.Squish` native P/Invoke → `BCnEncoder.NET` (makes texture
-  decode/encode actually cross-platform, not just the shell around it).
+- ~~Stage 3 item 8: `Gibbed.Squish` native P/Invoke → `BCnEncoder.NET`~~ — done in Task 1
+  of this stage instead (see "Revised during implementation" above), not deferred.
 - Stage 3 item 9: headless/CLI invocation surface for the future Python GUI wrapper,
   built on top of what this stage produces — not a replacement for the GUI.
 - The three "known gaps carried over unchanged" above, if/when prioritized.

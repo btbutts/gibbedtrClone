@@ -6,7 +6,7 @@
 
 **Architecture:** MVVM via `CommunityToolkit.Mvvm`. One `MainWindow` per app with a flat `TabControl` (every opened DRM file and every opened section viewer is its own top-level tab). Every tab can pop out into its own real OS `Window` and back in, driven entirely by moving its ViewModel between two collections — never by manually reparenting a `Control`. `AvaloniaHex` replaces `Be.Windows.Forms.HexBox`. `Material.Icons.Avalonia` supplies the pop-out/pop-in glyphs. `MessageBox.Avalonia` replaces WinForms `MessageBox.Show`.
 
-**Tech Stack:** .NET 10, Avalonia 12.1.1, Avalonia.Desktop 12.1.1, Avalonia.Themes.Fluent 12.1.1, Avalonia.Fonts.Inter 12.1.1, AvaloniaHex 0.1.13, Material.Icons.Avalonia 3.0.2, MessageBox.Avalonia 12.0.0, CommunityToolkit.Mvvm 8.4.2.
+**Tech Stack:** .NET 10, Avalonia 12.1.1, Avalonia.Desktop 12.1.1, Avalonia.Themes.Fluent 12.1.1, Avalonia.Fonts.Inter 12.1.1, AvaloniaHex 0.1.13, Material.Icons.Avalonia 3.0.2, MessageBox.Avalonia 12.0.0, CommunityToolkit.Mvvm 8.4.2, BCnEncoder.Net 2.3.0 (replaces `Gibbed.Squish`'s native P/Invoke — see Global Constraints).
 
 **Spec:** `docs/superpowers/specs/2026-08-14-drmedit-avalonia-migration-design.md`
 
@@ -15,7 +15,7 @@
 - Branch is `DRMEdit-ReplaceHexEditor`, off `cross-platform-NET10`. Do not merge back until Task 8's Tomb Raider interactive checkpoint and Task 12's Deus Ex 3 structural checkpoint both pass.
 - Both projects are in-place rewrites: same project folder, same project name, same output exe name. No new project names.
 - `Gibbed.TombRaider.DRMEdit` and `Gibbed.DeusEx3.DRMEdit` stay fully duplicated, per the spec's Decision 2 — do not extract a shared UI library.
-- `Gibbed.Squish`'s native `squish_32.dll`/`squish_64.dll` P/Invoke stays exactly as-is. Do not touch it.
+- **Superseded during Task 1**: `Gibbed.Squish`'s native `squish_32.dll`/`squish_64.dll` P/Invoke was originally meant to stay untouched this stage. That blocked `Gibbed.TombRaider.DRMEdit` from ever reaching plain `net10.0` (NuGet's TFM compatibility is one-directional — a plain project can't reference a `net10.0-windows`-tagged one), which the user did not want. Resolution: `Gibbed.Squish` was renamed `Texture.BCnE.NET.Codec` and its native P/Invoke replaced by the managed `BCnEncoder.Net` package (same public `CompressImage`/`DecompressImage`/`Flags` API, so no caller changes needed) — this is Stage 3 item 8 of `multi-platform-retarget.md`, done here instead of later. `Gibbed.IO`, `Gibbed.CrystalDynamics.FileFormats`, `Gibbed.TombRaider.FileFormats`, `Gibbed.DeusEx3.FileFormats`, and `NDesk.Options` were also retargeted to plain `net10.0` in the same pass (Stage 3 items 1-3), since they were the same TFM-compatibility blocker one layer down. Both DRMEdit projects now target plain `net10.0` for real, not `net10.0-windows`.
 - No unit tests exist for DRMEdit's UI today and none are being added — this codebase's established verification method (used for every prior DRMEdit change) is build-success plus manual interactive runs. Each task's "test" step means exactly that: build clean, run, manually confirm the described behavior.
 - Package versions are pinned exactly as listed in Tech Stack above — they were confirmed against the real, current NuGet listings and a real generated Avalonia 12.1.1/net10.0 project template during planning. Do not "helpfully" bump them.
 - Preserve the three known gaps documented in the spec (no error handling on corrupt DRM load; `OutOfMemoryException`→general-`Exception` catch-type change; `TextureViewer`'s same-size/single-mipmap restriction) — do not add new handling for them, and do not silently drop the empty `tabPage2`/permanently-disabled buttons that exist in the current WinForms code.
@@ -143,7 +143,7 @@ Replace the full contents of `Gibbed.TombRaider.DRMEdit/Gibbed.TombRaider.DRMEdi
 
   <ItemGroup>
     <ProjectReference Include="..\Gibbed.IO\Gibbed.IO.csproj" />
-    <ProjectReference Include="..\Gibbed.Squish\Gibbed.Squish.csproj" />
+    <ProjectReference Include="..\Texture.BCnE.NET.Codec\Texture.BCnE.NET.Codec.csproj" />
     <ProjectReference Include="..\Gibbed.TombRaider.FileFormats\Gibbed.TombRaider.FileFormats.csproj" />
     <ProjectReference Include="..\NDesk.Options\NDesk.Options.csproj" />
   </ItemGroup>
@@ -1570,7 +1570,7 @@ If the user requests changes, make them here (in whichever of Tasks 1-4's files 
 - Modify: `Gibbed.TombRaider.DRMEdit/ViewModels/FileViewerViewModel.cs` (already references `TextureViewerViewModel` from Task 3 — no change needed here, just confirming it now compiles for real)
 
 **Interfaces:**
-- Consumes: `DocumentTabViewModel` (Task 2), `DRM.Section`/`PCD9File`/`PCD9.Format` (existing), `Squish.Native.DecompressImage`/`CompressImage` (existing, unchanged).
+- Consumes: `DocumentTabViewModel` (Task 2), `DRM.Section`/`PCD9File`/`PCD9.Format` (existing), `TextureCodec.DecompressImage`/`CompressImage` (existing, unchanged).
 - Produces: `TextureViewerViewModel(DRM.Section section)` — `WriteableBitmap? Preview` (observable), `bool IsZoomed` (observable), `bool ShowAlpha` (observable), `string InfoText` (observable), `SaveCommand`, `SaveToFileCommand`, `LoadFromFileCommand`.
 
 - [ ] **Step 1: Create TextureViewerViewModel**
@@ -1587,6 +1587,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
 using DRM = Gibbed.TombRaider.FileFormats.DRM;
 using MsBox.Avalonia;
+using Texture.BCnE.NET.Codec;
 using MsBox.Avalonia.Enums;
 
 namespace Gibbed.TombRaider.DRMEdit.ViewModels
@@ -1643,9 +1644,9 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             byte[] data = _texture.Format switch
             {
                 FileFormats.PCD9.Format.A8R8G8B8 => mip.Data,
-                FileFormats.PCD9.Format.DXT1 => Squish.Native.DecompressImage(mip.Data, width, height, Squish.Native.Flags.DXT1),
-                FileFormats.PCD9.Format.DXT3 => Squish.Native.DecompressImage(mip.Data, width, height, Squish.Native.Flags.DXT3),
-                FileFormats.PCD9.Format.DXT5 => Squish.Native.DecompressImage(mip.Data, width, height, Squish.Native.Flags.DXT5),
+                FileFormats.PCD9.Format.DXT1 => TextureCodec.DecompressImage(mip.Data, width, height, TextureCodec.Flags.DXT1),
+                FileFormats.PCD9.Format.DXT3 => TextureCodec.DecompressImage(mip.Data, width, height, TextureCodec.Flags.DXT3),
+                FileFormats.PCD9.Format.DXT5 => TextureCodec.DecompressImage(mip.Data, width, height, TextureCodec.Flags.DXT5),
                 _ => null,
             };
 
@@ -1772,13 +1773,13 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
                     _texture.Mipmaps[0].Data = mip;
                     break;
                 case FileFormats.PCD9.Format.DXT1:
-                    _texture.Mipmaps[0].Data = Squish.Native.CompressImage(mip, width, height, Squish.Native.Flags.DXT1);
+                    _texture.Mipmaps[0].Data = TextureCodec.CompressImage(mip, width, height, TextureCodec.Flags.DXT1);
                     break;
                 case FileFormats.PCD9.Format.DXT3:
-                    _texture.Mipmaps[0].Data = Squish.Native.CompressImage(mip, width, height, Squish.Native.Flags.DXT3);
+                    _texture.Mipmaps[0].Data = TextureCodec.CompressImage(mip, width, height, TextureCodec.Flags.DXT3);
                     break;
                 case FileFormats.PCD9.Format.DXT5:
-                    _texture.Mipmaps[0].Data = Squish.Native.CompressImage(mip, width, height, Squish.Native.Flags.DXT5);
+                    _texture.Mipmaps[0].Data = TextureCodec.CompressImage(mip, width, height, TextureCodec.Flags.DXT5);
                     break;
             }
 
@@ -2230,6 +2231,7 @@ using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
 using DRM = Gibbed.DeusEx3.FileFormats.DRM;
+using Texture.BCnE.NET.Codec;
 
 namespace Gibbed.DeusEx3.DRMEdit.ViewModels
 {
@@ -2280,9 +2282,9 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
             byte[] data = _texture.Format switch
             {
                 FileFormats.PCD9.Format.A8R8G8B8 => mip.Data,
-                FileFormats.PCD9.Format.DXT1 => Squish.Native.DecompressImage(mip.Data, width, height, Squish.Native.Flags.DXT1),
-                FileFormats.PCD9.Format.DXT3 => Squish.Native.DecompressImage(mip.Data, width, height, Squish.Native.Flags.DXT3),
-                FileFormats.PCD9.Format.DXT5 => Squish.Native.DecompressImage(mip.Data, width, height, Squish.Native.Flags.DXT5),
+                FileFormats.PCD9.Format.DXT1 => TextureCodec.DecompressImage(mip.Data, width, height, TextureCodec.Flags.DXT1),
+                FileFormats.PCD9.Format.DXT3 => TextureCodec.DecompressImage(mip.Data, width, height, TextureCodec.Flags.DXT3),
+                FileFormats.PCD9.Format.DXT5 => TextureCodec.DecompressImage(mip.Data, width, height, TextureCodec.Flags.DXT5),
                 _ => null,
             };
 
