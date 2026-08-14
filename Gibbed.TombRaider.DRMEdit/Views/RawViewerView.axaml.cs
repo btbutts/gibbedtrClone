@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Gibbed.TombRaider.DRMEdit.ViewModels;
 
 namespace Gibbed.TombRaider.DRMEdit.Views
 {
@@ -7,6 +8,14 @@ namespace Gibbed.TombRaider.DRMEdit.Views
         public RawViewerView()
         {
             InitializeComponent();
+
+            AttachedToVisualTree += (_, _) =>
+            {
+                if (DataContext is RawViewerViewModel viewModel)
+                {
+                    viewModel.GetTopLevel = () => TopLevel.GetTopLevel(this);
+                }
+            };
         }
     }
 }
