@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Gibbed.DeusEx3.DRMEdit.Views.TextureViewerToolbar"
+             x:DataType="vm:TextureViewerViewModel">
+    <StackPanel Orientation="Horizontal" Spacing="4">
+        <!-- No Save (back into the DRM) or Load From File (texture replace): Deus Ex 3's
+             TextureViewerViewModel has neither command; only export to PNG exists. -->
+        <Button Classes="toolbarIcon" Command="{Binding SaveToFileCommand}" ToolTip.Tip="Save to file">
+            <materialIcons:MaterialIcon Kind="ContentSaveAllOutline" Width="18" Height="18" />
+        </Button>
+        <Separator />
+        <ToggleButton Classes="toolbarIcon" IsChecked="{Binding IsZoomed}" ToolTip.Tip="Zoom">
+            <materialIcons:MaterialIcon Kind="MoveResizeVariant" Width="18" Height="18" />
+        </ToggleButton>
+        <Button Classes="toolbarIcon" Command="{Binding ZoomInCommand}" ToolTip.Tip="Zoom in">
+            <materialIcons:MaterialIcon Kind="MagnifyPlus" Width="18" Height="18" />
+        </Button>
+        <Button Classes="toolbarIcon" Command="{Binding ZoomOutCommand}" ToolTip.Tip="Zoom out">
+            <materialIcons:MaterialIcon Kind="MagnifyMinus" Width="18" Height="18" />
+        </Button>
+        <!-- No toolbarIcon class: Show Alpha keeps its default ToggleButton coloring
+             unchanged, per explicit instruction (mirrors Tomb Raider's TextureViewerToolbar). -->
+        <ToggleButton IsChecked="{Binding ShowAlpha}" ToolTip.Tip="Show alpha">
+            <materialIcons:MaterialIcon Kind="Alpha" Width="18" Height="18" />
+        </ToggleButton>
+    </StackPanel>
+</UserControl>

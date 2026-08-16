@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Gibbed.DeusEx3.DRMEdit.Views.FileViewerToolbar"
+             x:DataType="vm:FileViewerViewModel">
+    <StackPanel Orientation="Horizontal" Spacing="4">
+        <!-- No command: Gibbed.DeusEx3.FileFormats.DRMFile has no Serialize() method, so
+             there's no equivalent to TR's SaveDrmCommand at all. Kept as a permanently
+             disabled icon (rather than removed) for visual parity with Tomb Raider's
+             toolbar, matching the original WinForms saveDRMButton's Enabled=false. -->
+        <Button Classes="toolbarIcon" IsEnabled="False" ToolTip.Tip="Not supported for Deus Ex 3 DRM files">
+            <materialIcons:MaterialIcon Kind="FileExportOutline" Width="18" Height="18" />
+        </Button>
+        <ComboBox ItemsSource="{Binding TypeFilterOptions}" SelectedItem="{Binding SelectedTypeFilter}" Width="140" />
+        <Separator />
+        <Button Classes="toolbarIcon" Command="{Binding ViewSectionCommand}" ToolTip.Tip="View section">
+            <materialIcons:MaterialIcon Kind="OpenInApp" Width="18" Height="18" />
+        </Button>
+        <Button Classes="toolbarIcon" Command="{Binding ViewSectionRawCommand}" ToolTip.Tip="View section raw">
+            <materialIcons:MaterialIcon Kind="Hexadecimal" Width="18" Height="18" />
+        </Button>
+    </StackPanel>
+</UserControl>

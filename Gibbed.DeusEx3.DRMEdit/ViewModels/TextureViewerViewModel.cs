@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
@@ -19,6 +20,73 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
 
         [ObservableProperty]
         public partial bool IsZoomed { get; set; }
+
+        // Magnification applied on top of IsZoomed's fit-to-view/actual-size toggle; driven
+        // by TextureViewerView's Ctrl+scroll/pinch/Zoom In-Out handlers, clamped there to
+        // [TextureViewerView.MinZoom, TextureViewerView.MaxZoom].
+        [ObservableProperty]
+        public partial double ZoomFactor { get; set; } = 1.0;
+
+        public const double ZoomStepFactor = 1.25;
+
+        // The Zoom In/Out toolbar buttons live in TextureViewerToolbar, a sibling
+        // UserControl to TextureViewerView -- neither has a direct reference to the other's
+        // ScrollViewer, so these events (same pattern as DocumentTabViewModel's
+        // RequestPopOut/RequestClose) let the ViewModel reach the View's actual
+        // ScrollViewer-centering logic.
+        public event EventHandler<double>? RequestZoom;
+        public event EventHandler? RequestZoomReset;
+
+        [RelayCommand]
+        private void ZoomIn() => RequestZoom?.Invoke(this, ZoomStepFactor);
+
+        [RelayCommand]
+        private void ZoomOut() => RequestZoom?.Invoke(this, 1.0 / ZoomStepFactor);
+
+        // Fit-to-view no longer means a fixed ZoomFactor==1.0: TextureViewerView computes
+        // whatever factor actually fills the viewport (bounded by the shorter of width or
+        // height) and applies it through ApplyFitZoom below, which must NOT be treated as
+        // "the user manually zoomed" -- hence the suppression flag rather than comparing
+        // against a hardcoded value.
+        private bool _applyingFitZoom;
+
+        // IsZoomed==true is the canonical "actually fit to view" state: any manual
+        // magnification (buttons, Ctrl+scroll, pinch) means the display is no longer truly
+        // fit-to-view, so the toggle drops to unchecked to reflect that -- and clicking it
+        // again fully restores fit-to-view (below) rather than leaving the stale
+        // magnification in place.
+        partial void OnZoomFactorChanged(double value)
+        {
+            if (_applyingFitZoom)
+            {
+                return;
+            }
+
+            if (IsZoomed)
+            {
+                IsZoomed = false;
+            }
+        }
+
+        partial void OnIsZoomedChanged(bool value)
+        {
+            if (value == false)
+            {
+                return;
+            }
+
+            RequestZoomReset?.Invoke(this, EventArgs.Empty);
+        }
+
+        // Called by TextureViewerView once it has computed the actual fit-to-view scale
+        // from its own ScrollViewer bounds and the image's native pixel size (geometry the
+        // ViewModel has no access to).
+        public void ApplyFitZoom(double factor)
+        {
+            _applyingFitZoom = true;
+            ZoomFactor = factor;
+            _applyingFitZoom = false;
+        }
 
         [ObservableProperty]
         public partial bool ShowAlpha { get; set; } = true;

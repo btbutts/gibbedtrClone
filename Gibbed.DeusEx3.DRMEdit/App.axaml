@@ -12,6 +12,32 @@
     <Application.Styles>
         <FluentTheme />
         <materialIcons:MaterialIconStyles />
+
+        <!-- Shared 3-state background treatment for icon-only toolbar buttons: no
+             noticeable fill at rest, the theme's normal hover fill on hover, and (while the
+             mouse is actually held down) the theme's normal AT-REST fill, not its own
+             pressed fill, per explicit design choice. ButtonBackground/
+             ButtonBackgroundPointerOver are Avalonia's own FluentTheme semantic resource
+             keys (theme/light-dark aware), reused rather than hardcoding hex so these
+             buttons stay in sync with whatever the rest of the app's chrome resolves to. -->
+        <Style Selector="Button.toolbarIcon">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.toolbarIcon:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
+        </Style>
+        <Style Selector="Button.toolbarIcon:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+        </Style>
+        <Style Selector="ToggleButton.toolbarIcon">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ToggleButton.toolbarIcon:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
+        </Style>
+        <Style Selector="ToggleButton.toolbarIcon:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+        </Style>
     </Application.Styles>
 
 </Application>

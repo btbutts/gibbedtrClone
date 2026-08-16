@@ -2,18 +2,46 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:local="using:Gibbed.DeusEx3.DRMEdit"
         x:Class="Gibbed.DeusEx3.DRMEdit.Views.PopOutWindow"
         x:DataType="vm:DocumentTabViewModel"
         Width="700" Height="500"
+        Background="Transparent"
+        TransparencyLevelHint="Mica,AcrylicBlur,Blur,None"
+        ExtendClientAreaToDecorationsHint="True"
+        WindowDecorations="BorderOnly"
+        ExtendClientAreaTitleBarHeightHint="40"
         Title="{Binding Title}">
 
     <DockPanel>
-        <Button DockPanel.Dock="Top" HorizontalAlignment="Right" Margin="4"
-                Command="{Binding PopInCommand}"
-                ToolTip.Tip="Dock back into main window">
-            <materialIcons:MaterialIcon Kind="DockWindow" />
-        </Button>
-        <ContentControl Content="{Binding}" />
+
+        <!-- Title bar row: draggable background layer behind title text and window
+             controls, matching MainWindow's pattern (see MainWindow.axaml). -->
+        <Grid DockPanel.Dock="Top" Height="40">
+            <Border Name="TitleBarDragLayer" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" />
+
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding Title}" VerticalAlignment="Center"
+                           Margin="12,0,16,0" IsHitTestVisible="False" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Stretch" Name="WindowControlsHost" />
+            </Grid>
+        </Grid>
+
+        <Grid DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="6,4">
+                <Button Command="{Binding PopInCommand}" ToolTip.Tip="Dock back into main window">
+                    <materialIcons:MaterialIcon Kind="DockWindow" />
+                </Button>
+                <Separator />
+                <ContentControl Content="{Binding}">
+                    <ContentControl.ContentTemplate>
+                        <local:ToolbarViewLocator />
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+            </StackPanel>
+        </Grid>
+
+        <ContentControl Content="{Binding}" Background="{DynamicResource SystemControlPageBackgroundChromeLowBrush}" />
     </DockPanel>
 
 </Window>

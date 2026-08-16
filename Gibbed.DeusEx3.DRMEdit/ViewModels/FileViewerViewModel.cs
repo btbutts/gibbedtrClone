@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DRM = Gibbed.DeusEx3.FileFormats.DRM;
@@ -20,6 +21,13 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
 
         [ObservableProperty]
         public partial string SelectedTypeFilter { get; set; } = "All";
+
+        // Persists the content-list TreeView's scroll position across tab switches --
+        // MainWindow's ContentControl rebuilds this whole view from scratch each time the
+        // tab is reselected, which would otherwise reset the TreeView's own internal
+        // ScrollViewer.Offset. Saved/restored by FileViewerView's code-behind.
+        [ObservableProperty]
+        public partial Vector ScrollOffset { get; set; }
 
         public FileViewerViewModel(MainWindowViewModel owner, string path)
         {

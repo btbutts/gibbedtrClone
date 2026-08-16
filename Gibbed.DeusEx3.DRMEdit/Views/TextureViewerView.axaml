@@ -1,23 +1,37 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
-             xmlns:local="using:Gibbed.DeusEx3.DRMEdit.Views"
              x:Class="Gibbed.DeusEx3.DRMEdit.Views.TextureViewerView"
              x:DataType="vm:TextureViewerViewModel">
 
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
-            <Button Content="Save To File" Command="{Binding SaveToFileCommand}" />
-            <Separator />
-            <ToggleButton Content="Zoom" IsChecked="{Binding IsZoomed}" />
-            <ToggleButton Content="Show Alpha" IsChecked="{Binding ShowAlpha}" />
-        </StackPanel>
-
         <TextBlock DockPanel.Dock="Bottom" Text="{Binding InfoText}" Margin="4" />
 
-        <ScrollViewer>
-            <Image Source="{Binding Preview}"
-                   Stretch="{Binding IsZoomed, Converter={x:Static local:BoolToStretchConverter.Instance}}" />
+        <!-- LayoutTransformControl (not a plain RenderTransform) so the ScrollViewer's
+             Extent is measured/arranged against the SCALED size: a RenderTransform only
+             repaints pixels after layout, so the ScrollViewer would never grow scroll range
+             to match a zoomed-in image. Always Center-aligned and Stretch="None": both
+             manual zoom AND fit-to-view now go through the same ScaleTransform/ZoomFactor
+             path (TextureViewerView.axaml.cs computes the fit-to-view factor directly from
+             the ScrollViewer's own Bounds and the image's native pixel size) rather than
+             ever relying on Image's Stretch=Uniform, which needs Stretch alignment to have
+             a bounding box to scale into. Stretch alignment is also what caused manual
+             zoom's Extent.Width to get permanently pinned to the viewport width, since a
+             ScrollViewer's horizontal axis is measured against the viewport's finite width,
+             so a Stretch-aligned child never gets to report its true, larger natural width.
+             Two different alignment requirements for one property was the recurring source
+             of both previous bugs; one sizing mechanism for both states avoids the conflict
+             entirely. -->
+        <ScrollViewer Name="ImageScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer.GestureRecognizers>
+                <PinchGestureRecognizer />
+            </ScrollViewer.GestureRecognizers>
+            <LayoutTransformControl HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutTransformControl.LayoutTransform>
+                    <ScaleTransform ScaleX="{Binding ZoomFactor}" ScaleY="{Binding ZoomFactor}" />
+                </LayoutTransformControl.LayoutTransform>
+                <Image Name="TextureImage" Source="{Binding Preview}" Stretch="None" />
+            </LayoutTransformControl>
         </ScrollViewer>
     </DockPanel>
 

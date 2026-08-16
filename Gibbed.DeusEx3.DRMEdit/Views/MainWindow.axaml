@@ -2,53 +2,169 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:local="using:Gibbed.DeusEx3.DRMEdit"
         x:Class="Gibbed.DeusEx3.DRMEdit.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Width="1100" Height="750"
+        Background="Transparent"
+        TransparencyLevelHint="Mica,AcrylicBlur,Blur,None"
+        ExtendClientAreaToDecorationsHint="True"
+        WindowDecorations="BorderOnly"
+        ExtendClientAreaTitleBarHeightHint="40"
         Title="DRM Editor">
 
-    <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGesture="Ctrl+O" />
-                <Separator />
-                <MenuItem Header="E_xit" Click="OnExitClick" />
-            </MenuItem>
-            <MenuItem Header="_Windows">
-                <MenuItem Header="C_lose All" Command="{Binding CloseAllCommand}" />
-            </MenuItem>
-        </Menu>
-
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
-            <Button Content="Open DRM" Command="{Binding OpenCommand}" />
-        </StackPanel>
-
-        <TabControl ItemsSource="{Binding OpenDocuments}"
-                    SelectedItem="{Binding SelectedDocument}">
-            <TabControl.ItemTemplate>
-                <DataTemplate DataType="vm:DocumentTabViewModel">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
-                        <Button Command="{Binding PopOutCommand}"
-                                Classes="tabPopOut"
-                                ToolTip.Tip="Pop out into its own window">
-                            <materialIcons:MaterialIcon Kind="Export" Width="14" Height="14" />
-                        </Button>
-                        <Button Command="{Binding CloseCommand}"
-                                ToolTip.Tip="Close">
-                            <materialIcons:MaterialIcon Kind="Close" Width="14" Height="14" />
-                        </Button>
-                    </StackPanel>
-                </DataTemplate>
-            </TabControl.ItemTemplate>
-        </TabControl>
-    </DockPanel>
-
     <Window.Styles>
-        <!-- Pop-out button: hidden unless its tab is hovered or selected. -->
-        <Style Selector="TabItem:not(:pointerover):not(:selected) Button.tabPopOut">
+        <!-- Pop-out/close buttons: hidden unless their tab is hovered or selected. -->
+        <Style Selector="ListBoxItem:not(:pointerover):not(:selected) Button.tabPopOut">
             <Setter Property="IsVisible" Value="False" />
         </Style>
+        <Style Selector="ListBoxItem:not(:pointerover):not(:selected) Button.tabClose">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <!-- Tab title text: default state fills the tab; hover/selected states leave room
+             for the overlaid pop-out/close buttons and fade the text out underneath them
+             instead of the buttons pushing the tab wider. The mask is set on the wrapping
+             Border, not the TextBlock itself: Avalonia positions OpacityMask's relative
+             coordinates against a TextBlock's own ink/content bounds (which shrink to the
+             actual glyph run) rather than its stretched layout bounds, so short titles were
+             getting a narrower mask than long ones. A Border's Bounds are unambiguously its
+             full layout box regardless of its child's content length. -->
+        <Style Selector="ListBoxItem:not(:pointerover):not(:selected) Border.tabTitle">
+            <Setter Property="Margin" Value="10,0,10,0" />
+            <Setter Property="OpacityMask" Value="{x:Null}" />
+        </Style>
+        <!-- The mask brush itself is built per-tab in MainWindow.RecomputeTabWidths from
+             fixed pixel constants (TabFadeKeepOutWidth/TabFadeWidth) so it covers the same
+             absolute pixel span regardless of tab width, and bound here as one object. -->
+        <Style Selector="ListBoxItem:pointerover Border.tabTitle" x:DataType="vm:DocumentTabViewModel">
+            <Setter Property="Margin" Value="10,0,44,0" />
+            <Setter Property="OpacityMask" Value="{Binding TitleFadeMask}" />
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.tabTitle" x:DataType="vm:DocumentTabViewModel">
+            <Setter Property="Margin" Value="10,0,44,0" />
+            <Setter Property="OpacityMask" Value="{Binding TitleFadeMask}" />
+        </Style>
     </Window.Styles>
+
+    <DockPanel>
+
+        <!-- Title bar row: a draggable background layer, with title/tabs/window-controls
+             layered on top and given no background of their own, so empty space in any of
+             them passes the click through to the drag layer instead of swallowing it. -->
+        <Grid DockPanel.Dock="Top" Height="40">
+            <Border Name="TitleBarDragLayer" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" />
+
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding $parent[Window].Title}"
+                           VerticalAlignment="Center" Margin="12,0,16,0" IsHitTestVisible="False" />
+
+                <!-- Fills the whole * column (stable width, independent of tab content) so
+                     tab-width calculations in code-behind have a reliable available-width
+                     source; the ScrollViewer inside is Left-aligned and only as wide as its
+                     content, so genuine empty Grid space (nothing painted, nothing captured)
+                     exists beyond the tabs and falls through to the drag layer behind. -->
+                <Grid Grid.Column="1" Name="TabsHostGrid">
+                    <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
+                                  Name="TabScrollViewer" Background="{x:Null}" HorizontalAlignment="Left">
+                        <ListBox Name="TabListBox"
+                                 ItemsSource="{Binding OpenDocuments}"
+                                 SelectedItem="{Binding SelectedDocument}"
+                                 Background="{x:Null}"
+                                 BorderThickness="0"
+                                 Padding="4,0"
+                                 ScrollViewer.BringIntoViewOnFocusChange="False">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="Margin" Value="2,4,0,0" />
+                                    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                                    <Setter Property="CornerRadius" Value="6,6,0,0" />
+                                </Style>
+                                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                    <Setter Property="Background" Value="{DynamicResource SystemControlPageBackgroundChromeLowBrush}" />
+                                </Style>
+                                <Style Selector="ListBoxItem:not(:selected) /template/ ContentPresenter">
+                                    <Setter Property="Background" Value="Transparent" />
+                                </Style>
+                            </ListBox.Styles>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="vm:DocumentTabViewModel">
+                                    <Grid Width="{Binding Width}" ToolTip.Tip="{Binding Title}">
+                                        <!-- Background="Transparent" (not unset/null) is required: an
+                                             unfilled element appears to have no "painted bounds" of its
+                                             own for OpacityMask's relative-coordinate purposes, causing
+                                             it to fall back to the child TextBlock's actual ink bounds
+                                             instead of this Border's full layout box: the same
+                                             null-vs-Transparent distinction already relied on elsewhere
+                                             in this file for hit-testing pass-through. -->
+                                        <Border Classes="tabTitle" Background="Transparent">
+                                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </Border>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                    Margin="0,0,4,0">
+                                            <Button Command="{Binding PopOutCommand}" Classes="tabPopOut"
+                                                    Background="Transparent" BorderThickness="0" Padding="4"
+                                                    ToolTip.Tip="Pop out into its own window">
+                                                <materialIcons:MaterialIcon Kind="Export" Width="14" Height="14" />
+                                            </Button>
+                                            <Button Command="{Binding CloseCommand}" Classes="tabClose"
+                                                    Background="Transparent" BorderThickness="0" Padding="4"
+                                                    ToolTip.Tip="Close">
+                                                <materialIcons:MaterialIcon Kind="Close" Width="14" Height="14" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                </Grid>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch" Name="WindowControlsHost"
+                            Margin="8,0,0,0" />
+            </Grid>
+        </Grid>
+
+        <!-- Toolbar row: static File/Windows/Open DRM + dynamic per-tab actions -->
+        <Grid DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="6,4">
+                <Menu Background="Transparent">
+                    <MenuItem Header="_File">
+                        <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGesture="Ctrl+O">
+                            <MenuItem.Icon>
+                                <materialIcons:MaterialIcon Kind="FolderFileOutline" Width="16" Height="16" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Header="E_xit" Click="OnExitClick" />
+                    </MenuItem>
+                    <MenuItem Header="_Windows">
+                        <MenuItem Header="C_lose All" Command="{Binding CloseAllCommand}" />
+                    </MenuItem>
+                </Menu>
+                <Separator />
+                <Button Classes="toolbarIcon" Command="{Binding OpenCommand}" ToolTip.Tip="Open DRM">
+                    <materialIcons:MaterialIcon Kind="FolderFileOutline" Width="18" Height="18" />
+                </Button>
+                <Separator />
+                <ContentControl Content="{Binding SelectedDocument}">
+                    <ContentControl.ContentTemplate>
+                        <local:ToolbarViewLocator />
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+            </StackPanel>
+        </Grid>
+
+        <!-- Content -->
+        <ContentControl Content="{Binding SelectedDocument}" Background="{DynamicResource SystemControlPageBackgroundChromeLowBrush}" />
+
+    </DockPanel>
 
 </Window>
