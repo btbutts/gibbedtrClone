@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Gibbed.TombRaider.DRMEdit.Views.TitleBar.WindowsTitleBarButtons">
+    <StackPanel Orientation="Horizontal" Height="32">
+        <Button Name="MinimizeButton" Width="46" Height="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Minimize">
+            <Button.Styles>
+                <Style Selector="Button:pointerover /template/ ContentPresenter">
+                    <Setter Property="Background" Value="#22FFFFFF" />
+                </Style>
+            </Button.Styles>
+            <Path Data="M0,0 L10,0" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" Width="10" Height="1" />
+        </Button>
+        <Button Name="MaximizeButton" Width="46" Height="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Maximize">
+            <Button.Styles>
+                <Style Selector="Button:pointerover /template/ ContentPresenter">
+                    <Setter Property="Background" Value="#22FFFFFF" />
+                </Style>
+            </Button.Styles>
+            <Rectangle Width="10" Height="10" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" />
+        </Button>
+        <Button Name="CloseButton" Width="46" Height="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Close">
+            <Button.Styles>
+                <Style Selector="Button:pointerover /template/ ContentPresenter">
+                    <Setter Property="Background" Value="#E81123" />
+                </Style>
+                <Style Selector="Button:pointerover Path">
+                    <Setter Property="Stroke" Value="White" />
+                </Style>
+            </Button.Styles>
+            <Path Data="M0,0 L10,10 M0,10 L10,0" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" Width="10" Height="10" />
+        </Button>
+    </StackPanel>
+</UserControl>

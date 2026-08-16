@@ -5,27 +5,19 @@
              x:Class="Gibbed.TombRaider.DRMEdit.Views.FileViewerView"
              x:DataType="vm:FileViewerViewModel">
 
-    <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="4">
-            <Button Content="Save DRM" Command="{Binding SaveDrmCommand}" />
-            <Separator />
-            <Button Content="View Section" Command="{Binding ViewSectionCommand}" />
-            <Button Content="View Section Raw" Command="{Binding ViewSectionRawCommand}" />
-        </StackPanel>
-
-        <TreeView ItemsSource="{Binding Sections}"
-                  SelectedItem="{Binding SelectedSection}"
-                  DoubleTapped="OnNodeDoubleTapped">
-            <TreeView.ItemTemplate>
-                <DataTemplate DataType="vm:SectionNode">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Image Width="16" Height="16"
-                               Source="{Binding IconKey, Converter={x:Static views:FileViewerView.IconKeyToBitmapConverter}}" />
-                        <TextBlock Text="{Binding DisplayName}" />
-                    </StackPanel>
-                </DataTemplate>
-            </TreeView.ItemTemplate>
-        </TreeView>
-    </DockPanel>
+    <TreeView Name="SectionsTreeView"
+              ItemsSource="{Binding Sections}"
+              SelectedItem="{Binding SelectedSection}"
+              DoubleTapped="OnNodeDoubleTapped">
+        <TreeView.ItemTemplate>
+            <DataTemplate DataType="vm:SectionNode">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Image Width="16" Height="16"
+                           Source="{Binding IconKey, Converter={x:Static views:FileViewerView.IconKeyToBitmapConverter}}" />
+                    <TextBlock Text="{Binding DisplayName}" />
+                </StackPanel>
+            </DataTemplate>
+        </TreeView.ItemTemplate>
+    </TreeView>
 
 </UserControl>

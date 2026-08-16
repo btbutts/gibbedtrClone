@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -20,6 +21,13 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
 
         [ObservableProperty]
         public partial SectionNode? SelectedSection { get; set; }
+
+        // Persists the content-list TreeView's scroll position across tab switches --
+        // MainWindow's ContentControl rebuilds this whole view from scratch each time the
+        // tab is reselected, which would otherwise reset the TreeView's own internal
+        // ScrollViewer.Offset. Saved/restored by FileViewerView's code-behind.
+        [ObservableProperty]
+        public partial Vector ScrollOffset { get; set; }
 
         public FileViewerViewModel(MainWindowViewModel owner, string path)
         {

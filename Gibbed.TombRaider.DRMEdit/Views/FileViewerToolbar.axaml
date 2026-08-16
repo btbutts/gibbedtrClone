@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gibbed.TombRaider.DRMEdit.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Gibbed.TombRaider.DRMEdit.Views.FileViewerToolbar"
+             x:DataType="vm:FileViewerViewModel">
+    <StackPanel Orientation="Horizontal" Spacing="4">
+        <Button Classes="toolbarIcon" Command="{Binding SaveDrmCommand}" ToolTip.Tip="Save DRM">
+            <materialIcons:MaterialIcon Kind="FileExportOutline" Width="18" Height="18" />
+        </Button>
+        <Separator />
+        <Button Classes="toolbarIcon" Command="{Binding ViewSectionCommand}" ToolTip.Tip="View section">
+            <materialIcons:MaterialIcon Kind="OpenInApp" Width="18" Height="18" />
+        </Button>
+        <Button Classes="toolbarIcon" Command="{Binding ViewSectionRawCommand}" ToolTip.Tip="View section raw">
+            <materialIcons:MaterialIcon Kind="Hexadecimal" Width="18" Height="18" />
+        </Button>
+    </StackPanel>
+</UserControl>
