@@ -1,0 +1,42 @@
+# Force a consistent CRLF line ending for all text files in the working tree,
+# regardless of which platform (Windows/macOS/Linux) or git core.autocrlf
+# setting checks the repo out. Git still stores blobs normalized to LF
+# internally, so diffs stay clean across platforms; only the checked-out
+# working copy is forced to CRLF.
+* text=auto eol=crlf
+
+# Explicit per-extension rules (redundant with text=auto's own detection for
+# most of these, but explicit is worth it: guarantees intent regardless of
+# any future change to git's own text-vs-binary heuristics).
+*.cs            text eol=crlf
+*.cpp           text eol=crlf
+*.h             text eol=crlf
+*.def           text eol=crlf
+*.axaml         text eol=crlf
+*.xaml          text eol=crlf
+*.csproj        text eol=crlf
+*.vcxproj       text eol=crlf
+*.vcxproj.filters text eol=crlf
+*.sln           text eol=crlf
+*.json          text eol=crlf
+*.xml           text eol=crlf
+*.config        text eol=crlf
+*.manifest      text eol=crlf
+*.filelist      text eol=crlf
+*.md            text eol=crlf
+*.txt           text eol=crlf
+*.htm           text eol=crlf
+*.html          text eol=crlf
+*.editorconfig  text eol=crlf
+.gitattributes  text eol=crlf
+.gitignore      text eol=crlf
+
+# Binary assets: never touch line endings, never diff as text.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.ico  binary
+*.dll  binary
+*.pdb  binary
+*.exe  binary
+*.zip  binary

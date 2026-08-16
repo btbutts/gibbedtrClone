@@ -1,0 +1,27 @@
+# EditorConfig: https://editorconfig.org
+# Line endings are governed by .gitattributes (eol=crlf) for what git stores
+# and checks out; the end_of_line setting here keeps editors that honor
+# EditorConfig writing the same CRLF when creating or editing files locally.
+root = true
+
+[*]
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+indent_style = space
+indent_size = 4
+
+[*.{csproj,vcxproj,vcxproj.filters,sln,json,xml,config,manifest}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+# Vendored game-data reference dumps: leave formatting alone entirely beyond
+# the repo-wide CRLF policy above (they're not source we edit, and their
+# exact byte layout may matter for whatever tooling originally produced
+# them).
+[*.filelist]
+insert_final_newline = false
+trim_trailing_whitespace = false
