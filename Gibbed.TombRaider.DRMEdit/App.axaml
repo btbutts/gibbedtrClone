@@ -12,6 +12,11 @@
     <Application.Styles>
         <FluentTheme />
         <materialIcons:MaterialIconStyles />
+        <!-- AvaloniaHex ships its own control theme as a separate resource that has to be
+             explicitly included (same pattern as materialIcons:MaterialIconStyles above).
+             Without it, HexEditor has no control template at all, so it renders nothing
+             regardless of Document or Columns being set correctly. -->
+        <StyleInclude Source="avares://AvaloniaHex/Themes/Fluent/AvaloniaHex.axaml" />
 
         <!-- Shared 3-state background treatment for icon-only toolbar buttons: no
              noticeable fill at rest, the theme's normal hover fill on hover, and (while the
