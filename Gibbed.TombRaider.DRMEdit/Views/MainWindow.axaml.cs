@@ -34,9 +34,35 @@ namespace Gibbed.TombRaider.DRMEdit.Views
         // over which the title text fades from fully visible to fully invisible.
         private const double TabFadeWidth = 5;
 
+        // Tunable: minimum breathing room kept between the File/Windows menu and the
+        // centered toolbar button group when the window is narrow enough that the group
+        // would otherwise overlap the menu.
+        private const double ToolbarMenuButtonGap = 8;
+
+        // Tunable: fraction of the primary screen's own working-area width (DIP-corrected,
+        // not raw device pixels -- see RecomputeMinWindowWidth) added to the title bar
+        // text's footprint to form the window's minimum width. A fraction of the actual
+        // display's own resolution, rather than a fixed pixel constant, keeps the minimum
+        // proportionate whether the app runs on a 1080p, 1440p, or 4k screen -- a fixed
+        // pixel count would eat a very different fraction of the viewport on each.
+        private const double MinWidthScreenFraction = 1.0 / 8.0;
+
+        // Tunable: gap kept between the window controls and whatever sits immediately next
+        // to them once repositioned for macOS (see RepositionForMacWindowControls) -- on
+        // Windows/Linux this same breathing room is provided by WindowControlsHost's own
+        // XAML Margin="8,0,0,0" instead, which only makes sense for its default position at
+        // the right of the tabs, not the left of the title text.
+        private const double MacWindowControlsGap = 8;
+
         private readonly Grid _tabsHostGrid;
         private readonly ListBox _tabListBox;
         private readonly ScrollViewer _tabScrollViewer;
+        private readonly Grid _toolbarRootGrid;
+        private readonly Menu _toolbarMenu;
+        private readonly StackPanel _toolbarButtonsPanel;
+        private readonly TextBlock _titleText;
+        private readonly StackPanel _windowControlsHost;
+        private readonly Grid _titleBarLayoutGrid;
         private Point? _tabDragStart;
         private DocumentTabViewModel? _tabDragDocument;
         private bool _isDraggingTab;
@@ -47,11 +73,11 @@ namespace Gibbed.TombRaider.DRMEdit.Views
 
             var isMac = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
             var controls = this.FindControl<StackPanel>("WindowControlsHost")!;
+            _windowControlsHost = controls;
 
             if (isMac)
             {
                 controls.Children.Add(new MacTitleBarButtons());
-                DockPanel.SetDock(controls, Dock.Left);
             }
             else
             {
@@ -86,6 +112,50 @@ namespace Gibbed.TombRaider.DRMEdit.Views
                 }
             };
 
+            _toolbarRootGrid = this.FindControl<Grid>("ToolbarRootGrid")!;
+            _toolbarMenu = this.FindControl<Menu>("ToolbarMenu")!;
+            _toolbarButtonsPanel = this.FindControl<StackPanel>("ToolbarButtonsPanel")!;
+            _titleText = this.FindControl<TextBlock>("TitleText")!;
+            _titleBarLayoutGrid = this.FindControl<Grid>("TitleBarLayoutGrid")!;
+
+            if (isMac)
+            {
+                RepositionForMacWindowControls();
+            }
+
+            // The root Grid's Bounds change on window resize, the menu's on theme/font
+            // changes, and the buttons panel's whenever the per-tab dynamic toolbar content
+            // swaps (ContentControl rebuild on tab switch) or the "Open DRM" text
+            // shows/hides -- recomputing the overlap clamp from any of them keeps it in sync
+            // with current layout rather than a one-time snapshot.
+            foreach (var control in new Control[] { _toolbarRootGrid, _toolbarMenu, _toolbarButtonsPanel })
+            {
+                control.PropertyChanged += (_, args) =>
+                {
+                    if (args.Property == BoundsProperty)
+                    {
+                        RecomputeToolbarButtonsLeft();
+                    }
+                };
+            }
+
+            // Deliberately NOT re-run from _toolbarButtonsPanel's or _windowControlsHost's
+            // Bounds: the minimum width must stay the same across every tab regardless of
+            // which per-tab toolbar buttons happen to be showing (previously it wasn't,
+            // which is what made the window's minimum size balloon specifically on the
+            // texture tab's larger button set). Title text width only changes if the window
+            // Title binding itself changes, which this app never does after startup, so a
+            // single computation once real Bounds exist is sufficient -- still wired to
+            // PropertyChanged rather than a one-shot call so it recomputes correctly even if
+            // TitleText's first Bounds report is still 0x0 pre-layout.
+            _titleText.PropertyChanged += (_, args) =>
+            {
+                if (args.Property == BoundsProperty)
+                {
+                    RecomputeMinWindowWidth();
+                }
+            };
+
             DataContextChanged += (_, _) =>
             {
                 if (DataContext is MainWindowViewModel viewModel)
@@ -94,6 +164,65 @@ namespace Gibbed.TombRaider.DRMEdit.Views
                     RecomputeTabWidths();
                 }
             };
+        }
+
+        // Keeps the centered Open DRM + dynamic per-tab toolbar button group horizontally
+        // centered within the FULL toolbar row width when there's room, but never lets it
+        // move further left than immediately after the File/Windows menu's own footprint
+        // (plus a small gap) once the window gets too narrow for true centering -- avoids
+        // the buttons sliding underneath/overlapping the menu instead of wrapping or
+        // clipping. HorizontalAlignment="Left" is set on ToolbarButtonsPanel in XAML so this
+        // Margin.Left is the only thing positioning it; Center alignment would otherwise
+        // re-center within the space this margin already carved out.
+        private void RecomputeToolbarButtonsLeft()
+        {
+            var available = _toolbarRootGrid.Bounds.Width;
+            var buttonsWidth = _toolbarButtonsPanel.Bounds.Width;
+            if (available <= 0 || buttonsWidth <= 0)
+            {
+                return;
+            }
+
+            var menuRight = _toolbarMenu.Bounds.Width + _toolbarMenu.Margin.Left + _toolbarMenu.Margin.Right;
+            var centeredLeft = (available - buttonsWidth) / 2;
+            var clampedLeft = Math.Max(centeredLeft, menuRight + ToolbarMenuButtonGap);
+
+            var currentMargin = _toolbarButtonsPanel.Margin;
+            if (Math.Abs(currentMargin.Left - clampedLeft) > 0.5)
+            {
+                _toolbarButtonsPanel.Margin = new Thickness(clampedLeft, currentMargin.Top, 0, currentMargin.Bottom);
+            }
+        }
+
+        // Minimum window width = title bar text's own footprint (its left/right margin plus
+        // its text width -- i.e. exactly how far right the first tab starts, since the title
+        // TextBlock occupies the Grid's Auto-sized first column) + a tunable fraction of the
+        // PRIMARY SCREEN's own working-area width. Using the actual display's resolution
+        // (DIP-corrected via Scaling, not raw device pixels -- otherwise a 4k screen's
+        // larger pixel count alone would produce a far bigger minimum than a 1080p screen
+        // even though both should feel proportionately similar) rather than a hardcoded
+        // pixel constant is what keeps this reasonable across 1080p/1440p/4k and similar
+        // displays without needing a different constant per resolution class. Deliberately
+        // NOT a function of toolbar button count/width or window control button width: this
+        // must stay identical across every tab, and tying it to per-tab dynamic toolbar
+        // content (the previous approach) was what made the window balloon in size
+        // specifically when switching to the texture tab's larger button set.
+        private void RecomputeMinWindowWidth()
+        {
+            var titleWidth = _titleText.Bounds.Width + _titleText.Margin.Left + _titleText.Margin.Right;
+            if (titleWidth <= 0)
+            {
+                return;
+            }
+
+            var screen = Screens.Primary;
+            if (screen == null)
+            {
+                return;
+            }
+
+            var screenWidthDip = screen.WorkingArea.Width / screen.Scaling;
+            MinWidth = titleWidth + (screenWidthDip * MinWidthScreenFraction);
         }
 
         public MainWindow(List<string> startupFiles) : this()
@@ -113,6 +242,44 @@ namespace Gibbed.TombRaider.DRMEdit.Views
         private void OnExitClick(object? sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        // macOS convention puts window controls (traffic lights) at the top-LEFT, not the
+        // top-right like Windows/Linux. The XAML layout defaults to the Windows/Linux
+        // arrangement (TitleBarLayoutGrid = "Auto,*,Auto": title, tabs, then controls);
+        // getting the (already correctly macOS-styled, via MacTitleBarButtons) controls to
+        // actually RENDER on the left requires changing which column each of the three
+        // elements occupies, and since the flexible tabs column has to stay the star column
+        // wherever it ends up, the ColumnDefinitions themselves change shape too, not just
+        // each element's Grid.Column. A previous version of this code called
+        // DockPanel.SetDock(controls, Dock.Left) here instead, which silently did nothing:
+        // WindowControlsHost lives inside this Grid, not a DockPanel, so that attached
+        // property was never read by anything laying it out.
+        //
+        // Not yet verified on real macOS hardware (this project currently only builds and
+        // runs on Windows) -- this is a best-effort layout fix based on reading the code,
+        // not something that's been visually confirmed. See CLAUDE.md's Known Issues
+        // section for the full note.
+        private void RepositionForMacWindowControls()
+        {
+            _titleBarLayoutGrid.ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*");
+
+            Grid.SetColumn(_windowControlsHost, 0);
+            Grid.SetColumn(_titleText, 1);
+            Grid.SetColumn(_tabsHostGrid, 2);
+
+            // WindowControlsHost's XAML Margin="8,0,0,0" exists to gap it away from the tabs
+            // that used to sit immediately to its left; now it's the leftmost element, so
+            // that gap belongs on its right (toward the title text) instead. MacTitleBarButtons
+            // already carries its own left inset for the traffic lights themselves (see that
+            // file's Margin="12,0,0,0"), so this is purely the gap AFTER the controls.
+            _windowControlsHost.Margin = new Thickness(0, 0, MacWindowControlsGap, 0);
+
+            // TitleText's original Margin="12,0,16,0" assumed it was the leftmost element;
+            // its left inset is no longer needed now that the window controls (plus the gap
+            // just set above) already provide that space, so only the original right margin
+            // (breathing room before the tabs) is kept.
+            _titleText.Margin = new Thickness(0, 0, 16, 0);
         }
 
         private void OnOpenDocumentsChanged(object? sender, NotifyCollectionChangedEventArgs e)

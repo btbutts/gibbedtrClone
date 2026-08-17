@@ -4,19 +4,17 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Gibbed.TombRaider.DRMEdit.Views.TextureViewerToolbar"
              x:DataType="vm:TextureViewerViewModel">
-    <StackPanel Orientation="Horizontal" Spacing="4">
+    <StackPanel Orientation="Horizontal" Spacing="0">
         <Button Classes="toolbarIcon" Command="{Binding SaveCommand}" ToolTip.Tip="Save">
             <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="18" Height="18" />
         </Button>
-        <Separator />
         <Button Classes="toolbarIcon" Command="{Binding LoadFromFileCommand}" ToolTip.Tip="Load from file">
             <materialIcons:MaterialIcon Kind="FileImportOutline" Width="18" Height="18" />
         </Button>
         <Button Classes="toolbarIcon" Command="{Binding SaveToFileCommand}" ToolTip.Tip="Save to file">
             <materialIcons:MaterialIcon Kind="ContentSaveAllOutline" Width="18" Height="18" />
         </Button>
-        <Separator />
-        <ToggleButton Classes="toolbarIcon" IsChecked="{Binding IsZoomed}" ToolTip.Tip="Zoom">
+        <ToggleButton Classes="toolbarIcon" IsChecked="{Binding IsZoomed}" ToolTip.Tip="Fit-to-View">
             <materialIcons:MaterialIcon Kind="MoveResizeVariant" Width="18" Height="18" />
         </ToggleButton>
         <Button Classes="toolbarIcon" Command="{Binding ZoomInCommand}" ToolTip.Tip="Zoom in">

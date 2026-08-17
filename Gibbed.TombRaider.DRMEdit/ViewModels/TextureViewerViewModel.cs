@@ -30,6 +30,21 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
         [ObservableProperty]
         public partial double ZoomFactor { get; set; } = 1.0;
 
+        // Persists the ScrollViewer's pan position across tab switches -- MainWindow's
+        // ContentControl rebuilds this whole view from scratch each time the tab is
+        // reselected, which would otherwise reset panning back to (0,0) every time even
+        // though ZoomFactor/IsZoomed (being ViewModel-owned already) correctly survive it.
+        [ObservableProperty]
+        public partial Vector ScrollOffset { get; set; }
+
+        // Set once TextureViewerView has applied the constructor's initial IsZoomed-driven
+        // fit-to-view (see OnIsZoomedChanged/RequestZoomReset below). Not an
+        // [ObservableProperty]: nothing binds to it, it's pure one-shot bookkeeping so a
+        // fresh View instance recreated on every tab-switch-back doesn't re-run auto-fit
+        // (which would recenter and discard the user's pan position) on every reattachment,
+        // only on the texture's genuine first open.
+        public bool HasAppliedInitialFit { get; set; }
+
         public const double ZoomStepFactor = 1.25;
 
         // The Zoom In/Out toolbar buttons live in TextureViewerToolbar, a sibling
@@ -89,6 +104,18 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             _applyingFitZoom = true;
             ZoomFactor = factor;
             _applyingFitZoom = false;
+
+            // Setting this here, only once a fit has actually been computed and applied
+            // (rather than pre-emptively in TextureViewerView right before calling
+            // FitToView), covers every path that can trigger a fit: the constructor's
+            // auto-fit for a large texture AND a manual "Zoom" toggle click. Previously only
+            // the former set this flag, so after a manual toggle click the next
+            // tab-switch-back's fresh View instance would still see HasAppliedInitialFit ==
+            // false and re-run FitToView on a not-yet-laid-out ScrollViewer, computing a
+            // near-zero (clamped-to-MinZoom) scale from a still-empty Bounds -- the
+            // "reverts to zoomed way out" bug, reproducible exactly once per tab because
+            // this method's re-entry via the erroneous refit finally set the flag correctly.
+            HasAppliedInitialFit = true;
         }
 
         [ObservableProperty]

@@ -1,8 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Gibbed.TombRaider.DRMEdit.Views.TitleBar.WindowsTitleBarButtons">
-    <StackPanel Orientation="Horizontal" Height="32">
-        <Button Name="MinimizeButton" Width="46" Height="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Minimize">
+    <!-- VerticalAlignment="Top" (rather than the default Stretch, which, combined with
+         these buttons' own explicit Height below being less than the 40px title bar row,
+         would otherwise center them, splitting the leftover space evenly above and below)
+         is what makes the hover background touch the title bar's true top edge with zero
+         gap, matching the close button's existing flush right edge. All of that leftover
+         space collects below the buttons instead, which is deliberate: title bar height
+         (40, set in MainWindow.axaml) and these buttons' own Width/spacing are unchanged. -->
+    <StackPanel Orientation="Horizontal" Height="30" VerticalAlignment="Top">
+        <Button Name="MinimizeButton" Width="46" Height="30" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Minimize">
             <Button.Styles>
                 <Style Selector="Button:pointerover /template/ ContentPresenter">
                     <Setter Property="Background" Value="#22FFFFFF" />
@@ -10,7 +17,7 @@
             </Button.Styles>
             <Path Data="M0,0 L10,0" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" Width="10" Height="1" />
         </Button>
-        <Button Name="MaximizeButton" Width="46" Height="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Maximize">
+        <Button Name="MaximizeButton" Width="46" Height="30" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Maximize">
             <Button.Styles>
                 <Style Selector="Button:pointerover /template/ ContentPresenter">
                     <Setter Property="Background" Value="#22FFFFFF" />
@@ -18,7 +25,7 @@
             </Button.Styles>
             <Rectangle Width="10" Height="10" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" />
         </Button>
-        <Button Name="CloseButton" Width="46" Height="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Close">
+        <Button Name="CloseButton" Width="46" Height="30" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Close">
             <Button.Styles>
                 <Style Selector="Button:pointerover /template/ ContentPresenter">
                     <Setter Property="Background" Value="#E81123" />

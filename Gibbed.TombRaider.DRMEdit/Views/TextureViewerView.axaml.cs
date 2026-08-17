@@ -14,6 +14,7 @@ namespace Gibbed.TombRaider.DRMEdit.Views
 
         private readonly ScrollViewer _scrollViewer;
         private double? _pinchStartZoom;
+        private TextureViewerViewModel? _viewModel;
 
         public TextureViewerView()
         {
@@ -28,20 +29,86 @@ namespace Gibbed.TombRaider.DRMEdit.Views
             {
                 if (DataContext is TextureViewerViewModel viewModel)
                 {
+                    _viewModel = viewModel;
                     viewModel.GetTopLevel = () => TopLevel.GetTopLevel(this);
-                    viewModel.RequestZoom += (_, factor) => ZoomAtCenter(factor);
-                    viewModel.RequestZoomReset += (_, _) => FitToView();
 
-                    // The ViewModel may already have decided IsZoomed==true in its
-                    // constructor (before this View, and thus RequestZoomReset's only
-                    // subscriber, existed) -- run the same computation once now so a
-                    // freshly opened large texture actually opens fit-to-view.
-                    if (viewModel.IsZoomed)
-                    {
-                        FitToView();
-                    }
+                    // Named methods (not inline lambdas) so DetachedFromVisualTree below can
+                    // unsubscribe the exact same delegates. A fresh View instance is created
+                    // on every tab-switch-back (MainWindow's ContentControl rebuild), but the
+                    // ViewModel is long-lived; without unsubscribing here, every previously
+                    // detached View's handler stayed subscribed and fired ALONGSIDE the
+                    // current View's handler on the next RequestZoom/RequestZoomReset, with
+                    // stale handlers reading/writing this now-detached instance's own
+                    // _scrollViewer and corrupting the shared ViewModel's ZoomFactor via
+                    // ApplyFitZoom -- the cause of the intermittent "Zoom fit-to-view reverts
+                    // to a stale zoom level" bug (reproduced once per fresh texture tab).
+                    viewModel.RequestZoom -= OnRequestZoom;
+                    viewModel.RequestZoom += OnRequestZoom;
+                    viewModel.RequestZoomReset -= OnRequestZoomReset;
+                    viewModel.RequestZoomReset += OnRequestZoomReset;
+
+                    _scrollViewer.PropertyChanged -= OnScrollViewerPropertyChanged;
+                    _scrollViewer.PropertyChanged += OnScrollViewerPropertyChanged;
                 }
             };
+
+            // Deferred to Loaded (fires after this View's subtree has a real layout pass),
+            // not run inline in AttachedToVisualTree above: FitToView reads _scrollViewer's
+            // Bounds, and immediately after attaching to a freshly-rebuilt ContentControl
+            // (every tab switch recreates this View from scratch) those Bounds can still be
+            // 0x0 even after an explicit UpdateLayout() call, computing a bogus near-zero,
+            // MinZoom-clamped fit scale -- the "zoom reverts to way zoomed out" bug. Same
+            // fix shape as RawViewerView's HexEditor.Loaded fallback for the same underlying
+            // Avalonia timing issue.
+            _scrollViewer.Loaded += (_, _) =>
+            {
+                if (_viewModel == null)
+                {
+                    return;
+                }
+
+                // IsZoomed may already be true when this View is first ever created for a
+                // texture (constructor auto-fits large textures) or may have been set true
+                // later by a manual "Zoom" toggle click while a previous View instance was
+                // attached. Either way, HasAppliedInitialFit (set inside
+                // TextureViewerViewModel.ApplyFitZoom, not here) tells us whether that fit
+                // has actually been computed and applied yet; if so, restoring the persisted
+                // pan position is all a fresh reattach should do, not re-fitting from
+                // scratch and discarding it.
+                if (_viewModel.IsZoomed && !_viewModel.HasAppliedInitialFit)
+                {
+                    FitToView();
+                }
+                else
+                {
+                    _scrollViewer.Offset = _viewModel.ScrollOffset;
+                }
+            };
+
+            DetachedFromVisualTree += (_, _) =>
+            {
+                if (_viewModel != null)
+                {
+                    _viewModel.RequestZoom -= OnRequestZoom;
+                    _viewModel.RequestZoomReset -= OnRequestZoomReset;
+                }
+
+                _scrollViewer.PropertyChanged -= OnScrollViewerPropertyChanged;
+            };
+        }
+
+        private void OnRequestZoom(object? sender, double factor) => ZoomAtCenter(factor);
+
+        private void OnRequestZoomReset(object? sender, EventArgs e) => FitToView();
+
+        private void OnScrollViewerPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+        {
+            if (e.Property == ScrollViewer.OffsetProperty &&
+                sender is ScrollViewer scrollViewer &&
+                DataContext is TextureViewerViewModel viewModel)
+            {
+                viewModel.ScrollOffset = scrollViewer.Offset;
+            }
         }
 
         // Ctrl+scroll-wheel zoom: standard desktop hotkey combo for zoom, distinct from

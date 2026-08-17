@@ -4,16 +4,22 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Gibbed.TombRaider.DRMEdit.Views.FileViewerToolbar"
              x:DataType="vm:FileViewerViewModel">
-    <StackPanel Orientation="Horizontal" Spacing="4">
+    <StackPanel Orientation="Horizontal" Spacing="0">
         <Button Classes="toolbarIcon" Command="{Binding SaveDrmCommand}" ToolTip.Tip="Save DRM">
             <materialIcons:MaterialIcon Kind="FileExportOutline" Width="18" Height="18" />
         </Button>
-        <Separator />
         <Button Classes="toolbarIcon" Command="{Binding ViewSectionCommand}" ToolTip.Tip="View section">
             <materialIcons:MaterialIcon Kind="OpenInApp" Width="18" Height="18" />
         </Button>
-        <Button Classes="toolbarIcon" Command="{Binding ViewSectionRawCommand}" ToolTip.Tip="View section raw">
-            <materialIcons:MaterialIcon Kind="Hexadecimal" Width="18" Height="18" />
+        <!-- Padding="4" overrides Button.toolbarIcon's Padding="6" (inline Setter beats a
+             Style setter of equal specificity) for this button only: the Hexadecimal glyph
+             is visually just a small "0x", so at the standard 18x18/Padding=6 it reads as
+             noticeably smaller than every other toolbar icon despite being the same nominal
+             size. Bumping the icon to 22x22 while trimming padding to 4 keeps the button's
+             own total footprint identical (4+22+4 = 6+18+6 = 30), so it still lines up
+             flush with its neighbors. -->
+        <Button Classes="toolbarIcon" Padding="4" Command="{Binding ViewSectionRawCommand}" ToolTip.Tip="View section raw">
+            <materialIcons:MaterialIcon Kind="Hexadecimal" Width="22" Height="22" />
         </Button>
     </StackPanel>
 </UserControl>
