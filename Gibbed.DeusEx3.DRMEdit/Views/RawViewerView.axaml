@@ -6,7 +6,7 @@
              x:Class="Gibbed.DeusEx3.DRMEdit.Views.RawViewerView"
              x:DataType="vm:RawViewerViewModel">
 
-    <Grid RowDefinitions="200,4,*">
+    <Grid Name="RootGrid" RowDefinitions="200,4,*">
         <!-- HexEditor.Columns is an empty collection by default (confirmed via reflection:
              AvaloniaHex 0.1.13 doesn't populate any columns out of the box, unlike its
              internal render Layers, which are pre-populated). With zero columns there is
@@ -18,14 +18,47 @@
              internal HexView. Setting HexView.FontFamily directly in code-behind bypasses
              that and can be overwritten by the template binding. Matches the pattern used
              by AvaloniaHex's own working demo (examples/AvaloniaHex.Demo/MainWindow.axaml). -->
-        <hex:HexEditor Name="TheHexEditor" Grid.Row="0" Document="{Binding HexDocument}"
-                        FontFamily="Consolas">
-            <hex:HexEditor.Columns>
-                <hexRendering:OffsetColumn />
-                <hexRendering:HexColumn />
-                <hexRendering:AsciiColumn />
-            </hex:HexEditor.Columns>
-        </hex:HexEditor>
+        <!-- Grid.Row="0" wrapper (not the HexEditor directly): overlays the span-mode
+             splitter Thumb on top of the HexEditor without disturbing the outer Grid's own
+             row layout. Both children share the wrapper's single implicit cell, so the
+             Thumb (declared second) renders on top in Z-order by default. -->
+        <Grid Grid.Row="0" Name="HexRowContainer">
+            <!-- Left/right breathing room is added via two zero-content SpacerColumn
+                 instances (RawViewerView.axaml.cs), inserted before/after these three at
+                 construction time, not an external Padding wrapper. A wrapping
+                 Border/Padding was tried first and reverted: it shrinks HexEditor's (and
+                 thus HexView's) own outer Bounds, and HeaderLayer paints its base header
+                 background across HexView's own full Bounds.Width, so shrinking that bounds
+                 pulled the header's black background, and the scrollbar, in from the
+                 viewport's true edges instead of just shifting the column content. Spacer
+                 columns participate in HexView's own column-layout system directly, so they
+                 reserve real space without affecting HexView's own outer bounds at all. -->
+            <hex:HexEditor Name="TheHexEditor" Document="{Binding HexDocument}"
+                            FontFamily="Consolas">
+                <hex:HexEditor.Columns>
+                    <hexRendering:OffsetColumn />
+                    <hexRendering:HexColumn />
+                    <hexRendering:AsciiColumn />
+                </hex:HexEditor.Columns>
+            </hex:HexEditor>
+            <!-- Only visible/draggable in span mode (RawViewerView.axaml.cs pins
+                 BytesPerLine to a fixed 16 otherwise, so there's nothing to trade off).
+                 A bare Thumb has no visible chrome of its own in FluentTheme (it only gets
+                 styled when hosted inside something like GridSplitter/ScrollBar), so an
+                 explicit inline Template is required for it to actually paint anything.
+                 Without one, the drag hit-testing works but there's nothing on screen to
+                 see or aim for. -->
+            <Thumb Name="SpanSplitterThumb" Width="6" Cursor="SizeWestEast"
+                   Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                   HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                   IsVisible="{Binding SpanWindowWidth}">
+                <Thumb.Template>
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}" />
+                    </ControlTemplate>
+                </Thumb.Template>
+            </Thumb>
+        </Grid>
         <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" />
         <TabControl Grid.Row="2">
             <TabItem Header="File Info">

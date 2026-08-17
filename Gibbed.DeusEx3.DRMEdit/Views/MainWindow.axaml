@@ -3,6 +3,7 @@
         xmlns:vm="using:Gibbed.DeusEx3.DRMEdit.ViewModels"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         xmlns:local="using:Gibbed.DeusEx3.DRMEdit"
+        xmlns:converters="clr-namespace:Avalonia.Data.Converters;assembly=Avalonia.Base"
         x:Class="Gibbed.DeusEx3.DRMEdit.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Width="1100" Height="750"
@@ -55,8 +56,14 @@
         <Grid DockPanel.Dock="Top" Height="40">
             <Border Name="TitleBarDragLayer" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" />
 
-            <Grid ColumnDefinitions="Auto,*,Auto">
-                <TextBlock Grid.Column="0" Text="{Binding $parent[Window].Title}"
+            <!-- Column layout defaults to the Windows/Linux arrangement (title, then tabs,
+                 then window controls at the far right). MainWindow.axaml.cs repositions
+                 this for macOS at construction time: window controls move to Column 0 and
+                 the ColumnDefinitions themselves change shape (see
+                 RepositionForMacWindowControls), since macOS puts its traffic-light
+                 controls at the top-left, not the top-right. -->
+            <Grid Name="TitleBarLayoutGrid" ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Name="TitleText" Text="{Binding $parent[Window].Title}"
                            VerticalAlignment="Center" Margin="12,0,16,0" IsHitTestVisible="False" />
 
                 <!-- Fills the whole * column (stable width, independent of tab content) so
@@ -132,28 +139,59 @@
             </Grid>
         </Grid>
 
-        <!-- Toolbar row: static File/Windows/Open DRM + dynamic per-tab actions -->
-        <Grid DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-            <StackPanel Orientation="Horizontal" Spacing="4" Margin="6,4">
-                <Menu Background="Transparent">
-                    <MenuItem Header="_File">
-                        <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGesture="Ctrl+O">
-                            <MenuItem.Icon>
-                                <materialIcons:MaterialIcon Kind="FolderFileOutline" Width="16" Height="16" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <Separator />
-                        <MenuItem Header="E_xit" Click="OnExitClick" />
+        <!-- Toolbar row: File/Windows pinned at the far left, Open DRM + dynamic per-tab
+             buttons centered across the FULL row width (not just the space remaining after
+             the menu), EXCEPT when the window is narrow enough that centering would push
+             the button group left of the menu's own footprint: MainWindow.axaml.cs clamps
+             ToolbarButtonsPanel's Margin.Left in that case (see RecomputeToolbarButtonsLeft
+             and ToolbarMenuButtonGap). HorizontalAlignment="Left" (not Center) on the
+             StackPanel is deliberate: with Margin.Left computed and applied entirely in
+             code-behind, Center alignment would additionally center within whatever space
+             remains after that margin, double-applying the offset. FontSize="13" on the
+             Menu and CornerRadius="4" on the two top-level MenuItems below are the two
+             values to tune if the menu still looks too large/square-cornered relative to
+             the icon buttons. -->
+        <Grid DockPanel.Dock="Top" Name="ToolbarRootGrid" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <Menu Name="ToolbarMenu" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
+                  Margin="6,0,0,2" FontSize="13">
+                <MenuItem Header="_File" CornerRadius="4" Margin="0,0,3,0">
+                    <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGesture="Ctrl+O">
+                        <MenuItem.Icon>
+                            <materialIcons:MaterialIcon Kind="FolderFileOutline" Width="16" Height="16" />
+                        </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="_Windows">
-                        <MenuItem Header="C_lose All" Command="{Binding CloseAllCommand}" />
-                    </MenuItem>
-                </Menu>
-                <Separator />
-                <Button Classes="toolbarIcon" Command="{Binding OpenCommand}" ToolTip.Tip="Open DRM">
-                    <materialIcons:MaterialIcon Kind="FolderFileOutline" Width="18" Height="18" />
+                    <Separator />
+                    <MenuItem Header="E_xit" Click="OnExitClick" />
+                </MenuItem>
+                <MenuItem Header="_Windows" CornerRadius="4">
+                    <MenuItem Header="C_lose All" Command="{Binding CloseAllCommand}" />
+                </MenuItem>
+            </Menu>
+
+            <StackPanel Name="ToolbarButtonsPanel" Orientation="Horizontal" Spacing="0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Margin="0,0,0,2">
+                <!-- Shows "Open DRM" text next to the icon whenever no tab is currently
+                     selected: i.e. whenever the app is showing its blank landing page,
+                     which happens both before any file is ever opened AND every time the
+                     last/only remaining tab is closed (this app has no other way to get
+                     back to that landing page, so SelectedDocument == null is exactly and
+                     only that state). Binding directly to SelectedDocument's nullity (via
+                     the built-in ObjectConverters.IsNull, no ViewModel-side flag) is
+                     deliberately simpler than tracking OpenDocuments.Count: a
+                     HasOpenDocuments-style flag would stay true (hiding the text) whenever
+                     ANY tab was still open in the list even if the user wasn't actually
+                     looking at one, which is exactly the mismatch that made the landing page
+                     show an icon-only button with nothing else on screen to open a file from. -->
+                <Button Name="OpenDrmButton" Classes="toolbarIcon" Command="{Binding OpenCommand}" ToolTip.Tip="Open DRM">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="FolderFileOutline" Width="18" Height="18" />
+                        <!-- FontSize="13" matches ToolbarMenu's own FontSize above (its two
+                             values are meant to stay in sync); FontFamily is left unset on
+                             both, so it already inherits the same app-wide default. -->
+                        <TextBlock Text="Open DRM" VerticalAlignment="Center" FontSize="13"
+                                   IsVisible="{Binding SelectedDocument, Converter={x:Static converters:ObjectConverters.IsNull}}" />
+                    </StackPanel>
                 </Button>
-                <Separator />
                 <ContentControl Content="{Binding SelectedDocument}">
                     <ContentControl.ContentTemplate>
                         <local:ToolbarViewLocator />

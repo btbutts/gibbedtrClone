@@ -28,11 +28,10 @@
         </Grid>
 
         <Grid DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-            <StackPanel Orientation="Horizontal" Spacing="4" Margin="6,4">
-                <Button Command="{Binding PopInCommand}" ToolTip.Tip="Dock back into main window">
-                    <materialIcons:MaterialIcon Kind="DockWindow" />
+            <StackPanel Orientation="Horizontal" Spacing="0" Margin="6,0,6,2">
+                <Button Classes="toolbarIcon" Command="{Binding PopInCommand}" ToolTip.Tip="Dock back into main window">
+                    <materialIcons:MaterialIcon Kind="DockWindow" Width="18" Height="18" />
                 </Button>
-                <Separator />
                 <ContentControl Content="{Binding}">
                     <ContentControl.ContentTemplate>
                         <local:ToolbarViewLocator />

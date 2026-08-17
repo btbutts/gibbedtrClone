@@ -24,9 +24,15 @@
              pressed fill, per explicit design choice. ButtonBackground/
              ButtonBackgroundPointerOver are Avalonia's own FluentTheme semantic resource
              keys (theme/light-dark aware), reused rather than hardcoding hex so these
-             buttons stay in sync with whatever the rest of the app's chrome resolves to. -->
+             buttons stay in sync with whatever the rest of the app's chrome resolves to.
+             Padding="6" is explicit (not the FluentTheme default, which is wider than tall)
+             so a button is a perfect square around its fixed 18x18 icon: this is the value
+             to tune for overall toolbar button size. CornerRadius="4" matches the rounding
+             applied to the File/Windows menu headers in MainWindow.axaml. -->
         <Style Selector="Button.toolbarIcon">
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="CornerRadius" Value="4" />
         </Style>
         <Style Selector="Button.toolbarIcon:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
@@ -36,6 +42,8 @@
         </Style>
         <Style Selector="ToggleButton.toolbarIcon">
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="CornerRadius" Value="4" />
         </Style>
         <Style Selector="ToggleButton.toolbarIcon:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />

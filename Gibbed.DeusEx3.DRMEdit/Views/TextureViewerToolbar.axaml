@@ -4,14 +4,13 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Gibbed.DeusEx3.DRMEdit.Views.TextureViewerToolbar"
              x:DataType="vm:TextureViewerViewModel">
-    <StackPanel Orientation="Horizontal" Spacing="4">
+    <StackPanel Orientation="Horizontal" Spacing="0">
         <!-- No Save (back into the DRM) or Load From File (texture replace): Deus Ex 3's
              TextureViewerViewModel has neither command; only export to PNG exists. -->
         <Button Classes="toolbarIcon" Command="{Binding SaveToFileCommand}" ToolTip.Tip="Save to file">
             <materialIcons:MaterialIcon Kind="ContentSaveAllOutline" Width="18" Height="18" />
         </Button>
-        <Separator />
-        <ToggleButton Classes="toolbarIcon" IsChecked="{Binding IsZoomed}" ToolTip.Tip="Zoom">
+        <ToggleButton Classes="toolbarIcon" IsChecked="{Binding IsZoomed}" ToolTip.Tip="Fit-to-View">
             <materialIcons:MaterialIcon Kind="MoveResizeVariant" Width="18" Height="18" />
         </ToggleButton>
         <Button Classes="toolbarIcon" Command="{Binding ZoomInCommand}" ToolTip.Tip="Zoom in">

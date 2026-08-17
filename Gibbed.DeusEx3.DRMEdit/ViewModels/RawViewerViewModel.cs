@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Platform.Storage;
 using AvaloniaHex.Document;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,6 +15,24 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
 
         [ObservableProperty]
         public partial string InfoText { get; set; }
+
+        [ObservableProperty]
+        public partial bool SpanWindowWidth { get; set; }
+
+        // The three pieces of RawViewerView's own layout state that need to survive
+        // MainWindow's ContentControl rebuilding this whole view from scratch on every tab
+        // switch (same reason FileViewerViewModel.ScrollOffset exists): the hex/ascii
+        // split's fraction while in span mode, the hex output's own scroll position, and
+        // the horizontal GridSplitter's row height (hex area vs. the File Info/tabPage2
+        // tabs below it). All three are saved/restored by RawViewerView's code-behind.
+        [ObservableProperty]
+        public partial double SpanFraction { get; set; } = 0.75;
+
+        [ObservableProperty]
+        public partial Vector HexScrollOffset { get; set; }
+
+        [ObservableProperty]
+        public partial double HexRowHeight { get; set; } = 200;
 
         private readonly byte[] _data;
 

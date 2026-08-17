@@ -4,7 +4,7 @@
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Gibbed.DeusEx3.DRMEdit.Views.RawViewerToolbar"
              x:DataType="vm:RawViewerViewModel">
-    <StackPanel Orientation="Horizontal" Spacing="4">
+    <StackPanel Orientation="Horizontal" Spacing="0">
         <!-- LoadFromFileCommand's CanExecute is permanently false (matches the original
              WinForms RawViewer's loadFromFileButton, which was Enabled=false and never
              enabled anywhere); the command binding alone renders this correctly disabled. -->
@@ -14,5 +14,8 @@
         <Button Classes="toolbarIcon" Command="{Binding SaveToFileCommand}" ToolTip.Tip="Save to file">
             <materialIcons:MaterialIcon Kind="ContentSaveAllOutline" Width="18" Height="18" />
         </Button>
+        <ToggleButton Classes="toolbarIcon" IsChecked="{Binding SpanWindowWidth}" ToolTip.Tip="Span window width">
+            <materialIcons:MaterialIcon Kind="ArrowExpandHorizontal" Width="18" Height="18" />
+        </ToggleButton>
     </StackPanel>
 </UserControl>
