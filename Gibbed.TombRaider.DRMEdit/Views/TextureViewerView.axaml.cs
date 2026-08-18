@@ -24,6 +24,7 @@ namespace Gibbed.TombRaider.DRMEdit.Views
             _scrollViewer.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged);
             _scrollViewer.AddHandler(InputElement.PinchEvent, OnPinch);
             _scrollViewer.AddHandler(InputElement.PinchEndedEvent, OnPinchEnded);
+            _scrollViewer.AddHandler(InputElement.PointerTouchPadGestureMagnifyEvent, OnTouchPadMagnify);
 
             AttachedToVisualTree += (_, _) =>
             {
@@ -147,6 +148,28 @@ namespace Gibbed.TombRaider.DRMEdit.Views
         private void OnPinchEnded(object? sender, PinchEndedEventArgs e)
         {
             _pinchStartZoom = null;
+        }
+
+        // macOS trackpads are reported to Avalonia as pointer/mouse devices, not touch, so
+        // PinchGestureRecognizer (built to detect multiple simultaneous touch contacts)
+        // never fires for a trackpad pinch. AppKit delivers that gesture through a separate
+        // native callback (-[NSView magnifyWithEvent:], carrying NSEvent.magnification),
+        // which Avalonia's macOS backend forwards as PointerTouchPadGestureMagnifyEvent
+        // instead, confirmed against Avalonia's own native source (AvnView.mm): both
+        // Delta.X and Delta.Y are set to NSEvent.magnification, an INCREMENTAL delta since
+        // the last callback, unlike touch PinchEventArgs.Scale, which is an absolute scale
+        // relative to gesture start. Each event is therefore applied on top of the current
+        // zoom directly rather than against a captured gesture-start baseline.
+        private void OnTouchPadMagnify(object? sender, PointerDeltaEventArgs e)
+        {
+            if (DataContext is not TextureViewerViewModel viewModel)
+            {
+                return;
+            }
+
+            var newZoom = Math.Clamp(viewModel.ZoomFactor * (1.0 + e.Delta.X), MinZoom, MaxZoom);
+            ApplyZoomAtViewportPoint(viewModel, newZoom, e.GetPosition(_scrollViewer));
+            e.Handled = true;
         }
 
         // Zooms so that the content point currently under `viewportPoint` (in ScrollViewer

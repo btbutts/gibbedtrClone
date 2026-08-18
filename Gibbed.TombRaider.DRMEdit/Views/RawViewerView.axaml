@@ -18,6 +18,12 @@
              internal HexView. Setting HexView.FontFamily directly in code-behind bypasses
              that and can be overwritten by the template binding. Matches the pattern used
              by AvaloniaHex's own working demo (examples/AvaloniaHex.Demo/MainWindow.axaml). -->
+        <!-- Cascadia Mono is bundled under Assets/Fonts (avares URI below) instead of
+             naming "Consolas" directly: Consolas ships with Windows only, so on macOS/Linux
+             Avalonia fell back to a non-monospace system font, breaking the hex viewer's
+             cell width math (RawViewerView.axaml.cs assumes a fixed pitch font throughout)
+             and overlapping the hex/ASCII columns. Bundling guarantees the same font, and
+             the same slashed zero glyph, on every platform regardless of what's installed. -->
         <!-- Grid.Row="0" wrapper (not the HexEditor directly): overlays the span-mode
              splitter Thumb on top of the HexEditor without disturbing the outer Grid's own
              row layout. Both children share the wrapper's single implicit cell, so the
@@ -34,7 +40,7 @@
                  columns participate in HexView's own column-layout system directly, so they
                  reserve real space without affecting HexView's own outer bounds at all. -->
             <hex:HexEditor Name="TheHexEditor" Document="{Binding HexDocument}"
-                            FontFamily="Consolas">
+                            FontFamily="avares://Gibbed.TombRaider.DRMEdit/Assets/Fonts/CascadiaMono-Regular.ttf#Cascadia Mono">
                 <hex:HexEditor.Columns>
                     <hexRendering:OffsetColumn />
                     <hexRendering:HexColumn />

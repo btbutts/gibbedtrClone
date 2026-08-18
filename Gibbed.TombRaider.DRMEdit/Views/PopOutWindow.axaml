@@ -28,7 +28,13 @@
         </Grid>
 
         <Grid DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-            <StackPanel Orientation="Horizontal" Spacing="0" Margin="6,0,6,2">
+            <!-- HorizontalAlignment="Center": a StackPanel left as the default Stretch
+                 still arranges its own children starting from its own left edge, it
+                 doesn't center them within the extra stretched space. MainWindow centers
+                 its toolbar group via computed-margin code-behind (RecomputeToolbarButtonsLeft)
+                 because it also has a File/Windows menu the group must not overlap; this
+                 window has no menu to avoid, so plain centering is sufficient. -->
+            <StackPanel Orientation="Horizontal" Spacing="0" Margin="6,0,6,2" HorizontalAlignment="Center">
                 <Button Classes="toolbarIcon" Command="{Binding PopInCommand}" ToolTip.Tip="Dock back into main window">
                     <materialIcons:MaterialIcon Kind="DockWindow" Width="18" Height="18" />
                 </Button>

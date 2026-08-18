@@ -52,7 +52,9 @@ namespace Gibbed.DeusEx3.DRMEdit.Views
         // Windows/Linux this same breathing room is provided by WindowControlsHost's own
         // XAML Margin="8,0,0,0" instead, which only makes sense for its default position at
         // the right of the tabs, not the left of the title text.
-        private const double MacWindowControlsGap = 8;
+        // Bumped from 8 to 16 per user feedback testing on real macOS hardware: the
+        // original gap read as too tight between the traffic lights and the title text.
+        private const double MacWindowControlsGap = 16;
 
         private readonly Grid _tabsHostGrid;
         private readonly ListBox _tabListBox;

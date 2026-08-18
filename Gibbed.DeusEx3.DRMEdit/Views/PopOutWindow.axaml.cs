@@ -13,7 +13,9 @@ namespace Gibbed.DeusEx3.DRMEdit.Views
         // repositioned for macOS, mirrors MainWindow's MacWindowControlsGap constant. On
         // Windows/Linux this breathing room isn't needed since the controls are the
         // rightmost element with nothing after them.
-        private const double MacWindowControlsGap = 8;
+        // Bumped from 8 to 16 per user feedback testing on real macOS hardware: the
+        // original gap read as too tight between the traffic lights and the title text.
+        private const double MacWindowControlsGap = 16;
 
         public PopOutWindow()
         {

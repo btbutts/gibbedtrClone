@@ -1,6 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Gibbed.DeusEx3.DRMEdit.Views.TitleBar.MacTitleBarButtons">
+    <!-- Buttons use an explicit ControlTemplate (Ellipse + ContentPresenter) instead of
+         plain <Button>: FluentTheme's default Button template applies its own :pointerover
+         and :pressed background overlay (a grey highlight) on top of whatever Background
+         is set at the Button level, since that Style's Setter targets the template's
+         ContentPresenter directly and wins over the TemplateBinding. Real macOS traffic
+         lights never change color on hover, only the glyph inside fades in, so the default
+         chrome has to be replaced outright rather than merely overridden. -->
     <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,0,0,0" Height="32" VerticalAlignment="Center" Name="Root">
         <StackPanel.Styles>
             <Style Selector="StackPanel#Root:pointerover Path">
@@ -10,14 +17,41 @@
                 <Setter Property="IsVisible" Value="False" />
             </Style>
         </StackPanel.Styles>
-        <Button Name="CloseButton" Width="12" Height="12" CornerRadius="6" Padding="0" Background="#FF5F57" BorderThickness="0" ToolTip.Tip="Close">
-            <Path Data="M0,0 L6,6 M0,6 L6,0" Stroke="#4D0000" StrokeThickness="1" Width="6" Height="6" />
+        <Button Name="CloseButton" Width="14" Height="14" Padding="0" Background="#FF5F57" BorderThickness="0" ToolTip.Tip="Close">
+            <Button.Template>
+                <ControlTemplate>
+                    <Grid>
+                        <Ellipse Fill="{TemplateBinding Background}" />
+                        <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Button.Template>
+            <Path Data="M0,0 L7,7 M0,7 L7,0" Stroke="#4D0000" StrokeThickness="1.2" StrokeLineCap="Round" Width="7" Height="7" />
         </Button>
-        <Button Name="MinimizeButton" Width="12" Height="12" CornerRadius="6" Padding="0" Background="#FEBC2E" BorderThickness="0" ToolTip.Tip="Minimize">
-            <Path Data="M0,3 L6,3" Stroke="#985712" StrokeThickness="1" Width="6" Height="1" />
+        <Button Name="MinimizeButton" Width="14" Height="14" Padding="0" Background="#FEBC2E" BorderThickness="0" ToolTip.Tip="Minimize">
+            <Button.Template>
+                <ControlTemplate>
+                    <Grid>
+                        <Ellipse Fill="{TemplateBinding Background}" />
+                        <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Button.Template>
+            <Path Data="M0,3.5 L7,3.5" Stroke="#985712" StrokeThickness="1.2" StrokeLineCap="Round" Width="7" Height="7" />
         </Button>
-        <Button Name="MaximizeButton" Width="12" Height="12" CornerRadius="6" Padding="0" Background="#28C840" BorderThickness="0" ToolTip.Tip="Maximize">
-            <Path Data="M0,6 L4,6 L4,2 M6,0 L6,4 L2,4" Stroke="#0A630C" StrokeThickness="1" Width="6" Height="6" />
+        <Button Name="MaximizeButton" Width="14" Height="14" Padding="0" Background="#28C840" BorderThickness="0" ToolTip.Tip="Maximize">
+            <Button.Template>
+                <ControlTemplate>
+                    <Grid>
+                        <Ellipse Fill="{TemplateBinding Background}" />
+                        <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Button.Template>
+            <!-- Two small solid wedges in opposite corners (not open line-brackets, which
+                 read ambiguously at this size, previously reported as looking like a
+                 rotated "W") pointing diagonally outward: the standard macOS zoom glyph. -->
+            <Path Data="M0,7 L0,4 L3,7 Z M7,0 L7,3 L4,0 Z" Fill="#0A630C" Width="7" Height="7" />
         </Button>
     </StackPanel>
 </UserControl>
