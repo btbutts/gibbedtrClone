@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Gibbed.DeusEx3.RebuildFileLists</RootNamespace>
     <AssemblyName>Gibbed.DeusEx3.RebuildFileLists</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -10,7 +10,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>..\bin_dx3\</OutputPath>
+    <OutputPath>..\bin_dx3\$(PlatformOutputFolder)\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>..\bin_dx3_release\$(PlatformOutputFolder)\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,5 +22,19 @@
     <ProjectReference Include="..\Gibbed.ProjectData\Gibbed.ProjectData.csproj" />
     <ProjectReference Include="..\NDesk.Options\NDesk.Options.csproj" />
   </ItemGroup>
+
+  <Target Name="CopyProjectsData" BeforeTargets="Build">
+    <!-- Copied once to bin_dx3\projects (or bin_dx3_release\projects), a sibling of
+         Win64\MacOS-arm64\MacOS-Intel rather than duplicated inside each of them -
+         Gibbed.ProjectData looks one directory up from the running executable for
+         this folder for exactly that reason (see Manager.cs). SkipUnchangedFiles
+         makes the redundant copy from each platform's own build a cheap no-op. -->
+    <ItemGroup>
+      <ProjectsDataFile Include="..\projects\DX3\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ProjectsDataFile)"
+          DestinationFiles="@(ProjectsDataFile->'$(OutputPath)..\projects\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

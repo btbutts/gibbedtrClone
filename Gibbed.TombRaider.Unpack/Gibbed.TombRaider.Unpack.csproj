@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Gibbed.TombRaider.Unpack</RootNamespace>
     <AssemblyName>Gibbed.TombRaider.Unpack</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -10,10 +10,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>..\bin_tr\</OutputPath>
+    <OutputPath>..\bin_tr\$(PlatformOutputFolder)\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <OutputPath>..\bin_tr_release\</OutputPath>
+    <OutputPath>..\bin_tr_release\$(PlatformOutputFolder)\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,5 +22,19 @@
     <ProjectReference Include="..\Gibbed.ProjectData\Gibbed.ProjectData.csproj" />
     <ProjectReference Include="..\NDesk.Options\NDesk.Options.csproj" />
   </ItemGroup>
+
+  <Target Name="CopyProjectsData" BeforeTargets="Build">
+    <!-- Copied once to bin_tr\projects (or bin_tr_release\projects), a sibling of
+         Win64\MacOS-arm64\MacOS-Intel rather than duplicated inside each of them -
+         Gibbed.ProjectData looks one directory up from the running executable for
+         this folder for exactly that reason (see Manager.cs). SkipUnchangedFiles
+         makes the redundant copy from each platform's own build a cheap no-op. -->
+    <ItemGroup>
+      <ProjectsDataFile Include="..\projects\TombRaider\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ProjectsDataFile)"
+          DestinationFiles="@(ProjectsDataFile->'$(OutputPath)..\projects\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

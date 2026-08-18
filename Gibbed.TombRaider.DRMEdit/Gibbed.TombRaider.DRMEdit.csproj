@@ -13,10 +13,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>..\bin_tr\</OutputPath>
+    <OutputPath>..\bin_tr\$(PlatformOutputFolder)\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <OutputPath>..\bin_tr_release\</OutputPath>
+    <OutputPath>..\bin_tr_release\$(PlatformOutputFolder)\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

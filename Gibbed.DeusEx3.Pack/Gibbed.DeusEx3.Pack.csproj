@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Gibbed.DeusEx3.Pack</RootNamespace>
     <AssemblyName>Gibbed.DeusEx3.Pack</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -10,7 +10,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>..\bin_dx3\</OutputPath>
+    <OutputPath>..\bin_dx3\$(PlatformOutputFolder)\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>..\bin_dx3_release\$(PlatformOutputFolder)\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

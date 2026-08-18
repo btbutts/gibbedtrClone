@@ -13,7 +13,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>..\bin_dx3\</OutputPath>
+    <OutputPath>..\bin_dx3\$(PlatformOutputFolder)\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>..\bin_dx3_release\$(PlatformOutputFolder)\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

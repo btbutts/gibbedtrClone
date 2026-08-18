@@ -1,0 +1,87 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>CrystalDynamics.Builder</RootNamespace>
+    <AssemblyName>CrystalDynamics.Builder</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsPackable>false</IsPackable>
+    <!-- This project deliberately has no .cs files - it only hosts the
+         orchestration targets below - so csc always warns CS2008 ("no source
+         files specified"). Expected on every build, not a real problem. -->
+    <NoWarn>$(NoWarn);CS2008</NoWarn>
+  </PropertyGroup>
+
+  <!-- Every real, deployable project across both the Tomb Raider and Deus Ex 3
+       tool families. Kept as plain items, not ProjectReference, so this project
+       never compiles against them - it only drives their own Build/Rebuild/Clean
+       targets directly, once per RuntimeIdentifier declared in Directory.Build.props.
+       Deliberately excluded from this solution's normal Debug/Release build
+       configurations (see Crystal Dynamics.sln) so it only runs when invoked
+       directly - right-click it in Solution Explorer, or
+       "dotnet build CrystalDynamics.Builder -c Debug" / "-c Release" from the
+       command line - never as a side effect of an ordinary Build Solution or
+       single-project build. -->
+  <ItemGroup>
+    <ProjectToBuild Include="..\Gibbed.TombRaider.DRMEdit\Gibbed.TombRaider.DRMEdit.csproj" />
+    <ProjectToBuild Include="..\Gibbed.TombRaider.Pack\Gibbed.TombRaider.Pack.csproj" />
+    <ProjectToBuild Include="..\Gibbed.TombRaider.RebuildFileLists\Gibbed.TombRaider.RebuildFileLists.csproj" />
+    <ProjectToBuild Include="..\Gibbed.TombRaider.Unpack\Gibbed.TombRaider.Unpack.csproj" />
+    <ProjectToBuild Include="..\Gibbed.TombRaider.UnpackTiger\Gibbed.TombRaider.UnpackTiger.csproj" />
+    <ProjectToBuild Include="..\NDesk.Options\NDesk.Options.csproj" />
+    <ProjectToBuild Include="..\Gibbed.DeusEx3.DRMDecompress\Gibbed.DeusEx3.DRMDecompress.csproj" />
+    <ProjectToBuild Include="..\Gibbed.DeusEx3.DRMEdit\Gibbed.DeusEx3.DRMEdit.csproj" />
+    <ProjectToBuild Include="..\Gibbed.DeusEx3.DRMUnpack\Gibbed.DeusEx3.DRMUnpack.csproj" />
+    <ProjectToBuild Include="..\Gibbed.DeusEx3.Demux\Gibbed.DeusEx3.Demux.csproj" />
+    <ProjectToBuild Include="..\Gibbed.DeusEx3.Pack\Gibbed.DeusEx3.Pack.csproj" />
+    <ProjectToBuild Include="..\Gibbed.DeusEx3.RebuildFileLists\Gibbed.DeusEx3.RebuildFileLists.csproj" />
+    <ProjectToBuild Include="..\Gibbed.DeusEx3.Unpack\Gibbed.DeusEx3.Unpack.csproj" />
+    <ProjectToBuild Include="..\Test\Test.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TargetRid Include="win-x64" />
+    <TargetRid Include="osx-arm64" />
+    <TargetRid Include="osx-x64" />
+  </ItemGroup>
+
+  <!-- Runs once, before any of the multi-RID work, restoring without a specific
+       RID so NuGet resolves the common graph for all 14 projects in one pass -
+       RuntimeIdentifiers (plural, from Directory.Build.props) already tells NuGet
+       to pull every listed RID's assets as part of that same unscoped restore.
+       Nested in-process Restore scoped to one specific RuntimeIdentifier at a time
+       (what BuildAllPlatforms/RebuildAllPlatforms's own "Restore;Build" below would
+       be doing alone on a from-scratch tree) didn't reliably leave Avalonia's XAML
+       compiler task loadable by that same process's later Build, even fully
+       sequential - confirmed by testing. Doing one unscoped restore first leaves
+       the tree warm, so those targets' own Restore ends up a fast no-op. -->
+  <Target Name="RestoreAllProjectsOnce" BeforeTargets="BuildAllPlatforms;RebuildAllPlatforms">
+    <MSBuild Projects="@(ProjectToBuild)"
+             Targets="Restore"
+             Properties="Configuration=$(Configuration)"
+             BuildInParallel="true" />
+  </Target>
+
+  <Target Name="BuildAllPlatforms" AfterTargets="Build">
+    <MSBuild Projects="@(ProjectToBuild)"
+             Targets="Restore;Build"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=%(TargetRid.Identity)"
+             BuildInParallel="false" />
+  </Target>
+
+  <Target Name="RebuildAllPlatforms" AfterTargets="Rebuild">
+    <MSBuild Projects="@(ProjectToBuild)"
+             Targets="Restore;Rebuild"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=%(TargetRid.Identity)"
+             BuildInParallel="false" />
+  </Target>
+
+  <Target Name="CleanAllPlatforms" AfterTargets="Clean">
+    <MSBuild Projects="@(ProjectToBuild)"
+             Targets="Clean"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=%(TargetRid.Identity)"
+             BuildInParallel="false" />
+  </Target>
+
+</Project>

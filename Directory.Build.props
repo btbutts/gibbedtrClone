@@ -1,0 +1,45 @@
+<Project>
+
+  <!-- Shared by every project under the repo root: enables building/publishing each
+       tool for Windows or macOS (Apple Silicon or Intel), and routes both the final
+       output and the intermediate (obj) files into a per-platform subfolder underneath
+       whatever OutputPath the project already sets, so a plain right-click Build in
+       Visual Studio and a "dotnet build -r osx-arm64" from the command line never
+       collide in the same directory. Win32/win-x86 isn't wired up as an active
+       RuntimeIdentifier today (nothing in this repo builds it), but the folder name is
+       reserved below so adding it later is a one-line change. -->
+
+  <PropertyGroup>
+    <RuntimeIdentifiers>win-x64;osx-arm64;osx-x64</RuntimeIdentifiers>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(RuntimeIdentifier)' == '' Or '$(RuntimeIdentifier)' == 'win-x64' ">
+    <PlatformOutputFolder>Win64</PlatformOutputFolder>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'win-x86' ">
+    <PlatformOutputFolder>Win32</PlatformOutputFolder>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'osx-arm64' ">
+    <PlatformOutputFolder>MacOS-arm64</PlatformOutputFolder>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'osx-x64' ">
+    <PlatformOutputFolder>MacOS-Intel</PlatformOutputFolder>
+  </PropertyGroup>
+
+  <!-- Gives every platform, including the default/no-RID Win64 build, its own named
+       obj subfolder. Without this, only an explicit-RID build gets nested under obj\
+       (e.g. obj\Debug\osx-arm64\) while the default build writes straight into
+       obj\Debug\ with nothing underneath - fine for correctness (the SDK already keeps
+       RID-specific intermediates apart on its own), but inconsistent to look at.
+       Hardcoded "obj\" rather than $(BaseIntermediateOutputPath): Directory.Build.props
+       is imported before the SDK assigns that property its default value, so reading
+       it here evaluates empty and silently drops the "obj\" segment, which puts the
+       generated AssemblyAttributes.cs outside the SDK's default obj/** exclude glob
+       and makes it compile twice (CS0579). Safe to hardcode: nothing in this repo
+       overrides BaseIntermediateOutputPath. -->
+  <PropertyGroup Condition="'$(PlatformOutputFolder)' != ''">
+    <IntermediateOutputPath>obj\$(Configuration)\$(PlatformOutputFolder)\</IntermediateOutputPath>
+  </PropertyGroup>
+
+</Project>

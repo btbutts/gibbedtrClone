@@ -100,15 +100,24 @@ namespace Gibbed.ProjectData
                     {
                         case "registry":
                         {
-                            string key = actions.Current.GetAttribute("key", "");
-                            string value = actions.Current.GetAttribute("value", "");
-
-                            path = (string)Registry.GetValue(key, value, null);
-
-                            if (path != null) // && Directory.Exists(path) == true)
+                            // The Windows registry doesn't exist on macOS; leave this
+                            // install_location action failed so the next one (if any)
+                            // gets a chance instead of throwing PlatformNotSupportedException.
+                            // Left as a bare call, not the file's usual "== true", because
+                            // the CA1416 platform-compat analyzer only recognizes this exact
+                            // pattern as a guard for the Registry.GetValue call below it.
+                            if (OperatingSystem.IsWindows())
                             {
-                                locationPath = path;
-                                failed = false;
+                                string key = actions.Current.GetAttribute("key", "");
+                                string value = actions.Current.GetAttribute("value", "");
+
+                                path = (string)Registry.GetValue(key, value, null);
+
+                                if (path != null) // && Directory.Exists(path) == true)
+                                {
+                                    locationPath = path;
+                                    failed = false;
+                                }
                             }
 
                             break;

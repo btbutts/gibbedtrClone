@@ -7,6 +7,7 @@ debug/
 bin_tr/
 bin_tr_release/
 bin_dx3/
+bin_dx3_release/
 *.bak
 /CLAUDE.md
 /multi-platform-retarget.md

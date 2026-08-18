@@ -85,9 +85,12 @@ namespace Gibbed.ProjectData
         {
             var manager = new Manager();
 
+            // One directory up from the running executable, not right next to it:
+            // that lets Win64/MacOS-arm64/MacOS-Intel builds share a single copy of
+            // this data at the bin_tr/bin_dx3 level instead of each carrying its own.
             string projectPath;
             projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            projectPath = Path.Combine(projectPath, "projects");
+            projectPath = Path.Combine(projectPath, "..", "projects");
 
             manager._ProjectPath = projectPath;
 
