@@ -9,6 +9,33 @@
         <local:ViewLocator />
     </Application.DataTemplates>
 
+    <!-- AvaloniaHex's own Fluent Dark theme (Themes/Fluent/AvaloniaHex.axaml, included below)
+         hardcodes PrimaryCaretBackground/SecondaryCaretBackground/PrimaryCaretBorder/
+         SecondaryCaretBorder to Magenta/DarkMagenta, unlike PrimarySelectionBackground/
+         SecondarySelectionBackground a few keys over, which already derive from
+         SystemAccentColor. That reads fine on Windows, where Magenta happens to sit close to
+         the default purple accent, but clashes badly against macOS's blue accent. Overridden
+         here (checked before Application.Styles content during DynamicResource lookup, so
+         this reliably wins over the StyleInclude'd AvaloniaHex theme regardless of include
+         order) using SystemAccentColorLight1/2, Avalonia's own Fluent-theme-provided,
+         HSL-lightness-shifted shades of whatever SystemAccentColor currently is
+         (Avalonia.Themes.Fluent.Accents.SystemAccentColors), so the hex viewer's caret now
+         tracks the OS accent color on every platform instead of a fixed hue. -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="PrimaryCaretBackground" Color="{DynamicResource SystemAccentColorLight2}" Opacity="0.3" />
+                    <SolidColorBrush x:Key="SecondaryCaretBackground" Color="{DynamicResource SystemAccentColorLight1}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="PrimaryCaretBorderBrush" Color="{DynamicResource SystemAccentColorLight2}" />
+                    <SolidColorBrush x:Key="SecondaryCaretBorderBrush" Color="{DynamicResource SystemAccentColorLight1}" />
+                    <Pen x:Key="PrimaryCaretBorder" Brush="{DynamicResource PrimaryCaretBorderBrush}" />
+                    <Pen x:Key="SecondaryCaretBorder" Brush="{DynamicResource SecondaryCaretBorderBrush}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
         <materialIcons:MaterialIconStyles />
