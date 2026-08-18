@@ -32,6 +32,11 @@
     <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
     <PackageReference Include="MessageBox.Avalonia" Version="12.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <!-- Pinned to the exact version Avalonia.Skia 12.1.1 depends on, so this reference
+         resolves to the same native Skia binary Avalonia already loads instead of a
+         second, potentially conflicting one. Used to bypass Avalonia's Bitmap.Save()
+         PNG wrapper, which does not expose SkiaSharp's per-scanline filter selection. -->
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
   </ItemGroup>
 
   <ItemGroup>

@@ -102,6 +102,14 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
             {
                 document.Close();
             }
+
+            // OnRequestClose already knows how to close a popped-out document's window
+            // (IsPoppedOut path below), so route through the same document.Close() call
+            // used for docked tabs rather than closing PopOutWindows directly here.
+            foreach (var document in _popOutWindowService.GetOpenDocuments())
+            {
+                document.Close();
+            }
         }
     }
 }

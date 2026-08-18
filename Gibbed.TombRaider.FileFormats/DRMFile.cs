@@ -79,7 +79,7 @@ namespace Gibbed.TombRaider.FileFormats
                     resolverLen = 0;
                 }
 
-                data.WriteValueU32((uint)section.Data.Length, this.Endianness);
+                data.WriteValueU32((uint)(section.Data?.Length ?? 0), this.Endianness);
                 data.WriteValueU8((byte)section.Type);
                 data.WriteValueU8(section.Unknown05);
                 data.WriteValueU16(section.Unknown06, this.Endianness);
@@ -109,8 +109,13 @@ namespace Gibbed.TombRaider.FileFormats
                 {
                     data.WriteFromStream(resolvers[i], resolvers[i].Length);
                 }
-                data.WriteFromStream(this.Sections[i].Data, this.Sections[i].Data.Length);
-                this.Sections[i].Data.Position = 0;
+
+                if (this.Sections[i].Data != null)
+                {
+                    this.Sections[i].Data.Position = 0;
+                    data.WriteFromStream(this.Sections[i].Data, this.Sections[i].Data.Length);
+                    this.Sections[i].Data.Position = 0;
+                }
             }
 
             // Go back and write unknowns length

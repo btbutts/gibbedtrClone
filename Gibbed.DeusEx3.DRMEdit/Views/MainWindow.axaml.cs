@@ -164,6 +164,20 @@ namespace Gibbed.DeusEx3.DRMEdit.Views
                     RecomputeTabWidths();
                 }
             };
+
+            // Popped-out windows are independent Window instances, not children of this
+            // one, so closing MainWindow alone leaves them open (the app keeps running
+            // under the default OnLastWindowClose shutdown mode until the user closes each
+            // of those too). The original WinForms MDI parent closed every child
+            // automatically; CloseAllCommand already reaches both docked tabs and
+            // popped-out documents, so running it here on Closing restores that behavior.
+            Closing += (_, _) =>
+            {
+                if (DataContext is MainWindowViewModel viewModel)
+                {
+                    viewModel.CloseAllCommand.Execute(null);
+                }
+            };
         }
 
         // Keeps the centered Open DRM + dynamic per-tab toolbar button group horizontally

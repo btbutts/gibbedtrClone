@@ -45,5 +45,10 @@ namespace Gibbed.DeusEx3.DRMEdit.Services
             entry.ClosedProgrammatically = true;
             entry.Window.Close();
         }
+
+        public IReadOnlyCollection<DocumentTabViewModel> GetOpenDocuments()
+        {
+            return new List<DocumentTabViewModel>(_entries.Keys);
+        }
     }
 }
