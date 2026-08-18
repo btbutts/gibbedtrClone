@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia;
 using NDesk.Options;
@@ -17,8 +18,26 @@ namespace Gibbed.TombRaider.DRMEdit
 
         private static bool LooksLikeOption(string arg)
         {
-            return string.IsNullOrEmpty(arg) == false &&
-                (arg[0] == '-' || arg[0] == '/');
+            if (string.IsNullOrEmpty(arg) == true)
+            {
+                return false;
+            }
+
+            if (File.Exists(arg) == true)
+            {
+                return false;
+            }
+
+            if (arg[0] == '-')
+            {
+                return true;
+            }
+
+            // '/' is only an option prefix on Windows (e.g. "/?"), on Unix-like systems
+            // it's the root of every absolute path, so treating it as a flag there rejects
+            // every startup file passed with a full path, such as opening a DRM from the
+            // command line on macOS or Linux.
+            return arg[0] == '/' && RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         }
 
         [STAThread]
