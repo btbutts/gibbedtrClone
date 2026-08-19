@@ -86,16 +86,14 @@ namespace Gibbed.TombRaider.DRMEdit.Views
                 controls.Children.Add(new WindowsTitleBarButtons());
             }
 
-            // MenuItem.InputGesture only ever renders text (via PlatformKeyGestureConverter),
-            // it does not register a real key binding -- see the Ctrl+O/Cmd+O KeyBindings on
-            // this Window itself for what actually makes the shortcut work. Setting the real
-            // platform gesture here (rather than a fixed "Ctrl+O" in XAML, which can't branch
-            // on OS) lets Avalonia's own converter render the correct native text: "Ctrl+O" on
-            // Windows, and a real "⌘O" on macOS via the ctrl/meta/shift/alt glyph overrides
-            // Avalonia.Native's AvaloniaNativePlatform registers automatically at startup, not
-            // a hardcoded Unicode string of our own.
+            // MenuItem.InputGesture only renders text, it doesn't bind a real shortcut.
+            var openGesture = new KeyGesture(Key.O, isMac ? KeyModifiers.Meta : KeyModifiers.Control);
             var openMenuItem = this.FindControl<MenuItem>("OpenMenuItem")!;
-            openMenuItem.InputGesture = new KeyGesture(Key.O, isMac ? KeyModifiers.Meta : KeyModifiers.Control);
+            openMenuItem.InputGesture = openGesture;
+
+            // Only one gesture registered, not both: macOS Ctrl+O should not also trigger this.
+            var openKeyBinding = new KeyBinding { Gesture = openGesture };
+            KeyBindings.Add(openKeyBinding);
 
             // Drag affordance lives on a dedicated background layer behind the title bar's
             // content, not on the content itself: the title text is IsHitTestVisible="False"
@@ -175,6 +173,7 @@ namespace Gibbed.TombRaider.DRMEdit.Views
                 {
                     viewModel.OpenDocuments.CollectionChanged += OnOpenDocumentsChanged;
                     RecomputeTabWidths();
+                    openKeyBinding.Command = viewModel.OpenCommand;
                 }
             };
 

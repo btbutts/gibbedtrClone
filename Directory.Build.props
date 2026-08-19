@@ -14,16 +14,47 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(RuntimeIdentifier)' == '' Or '$(RuntimeIdentifier)' == 'win-x64' ">
+  <!-- A plain "dotnet build"/"dotnet run" with no explicit -r leaves RuntimeIdentifier
+       empty. This used to map straight to Win64 unconditionally below, so on macOS every
+       ordinary no-RID build (the everyday command line workflow, not just
+       CrystalDynamics.Builder's explicit per-platform passes) wrote its obj/output into a
+       folder literally named Win64, sharing that path's cached NuGet/Roslyn state with an
+       actual win-x64 cross-compile pass and corrupting later incremental builds until the
+       whole obj tree had to be wiped and the repo re-cloned to recover. Confirmed via a
+       throwaway diagnostic Target run directly on the Mac hardware: RuntimeIdentifier=[],
+       PlatformOutputFolder=[Win64] regardless.
+
+       NETCoreSdkRuntimeIdentifier (the SDK's own RID for the current machine) looked like
+       the obvious fallback, but a separate throwaway probe proved it reads back empty this
+       early: Directory.Build.props imports before the SDK sets it, the same timing trap
+       the IntermediateOutputPath comment below already documents for
+       BaseIntermediateOutputPath. $(OS), $([MSBuild]::IsOSPlatform(...)), and
+       $([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture) are true
+       MSBuild/CLR intrinsics rather than SDK-injected properties, confirmed available at
+       this same early point, so those are what actually detect the host here. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <EffectiveRuntimeIdentifier>$(RuntimeIdentifier)</EffectiveRuntimeIdentifier>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == '' And '$([MSBuild]::IsOSPlatform(`Windows`))' == 'true'">
+    <EffectiveRuntimeIdentifier>win-x64</EffectiveRuntimeIdentifier>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == '' And '$([MSBuild]::IsOSPlatform(`OSX`))' == 'true' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'Arm64'">
+    <EffectiveRuntimeIdentifier>osx-arm64</EffectiveRuntimeIdentifier>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == '' And '$([MSBuild]::IsOSPlatform(`OSX`))' == 'true' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' != 'Arm64'">
+    <EffectiveRuntimeIdentifier>osx-x64</EffectiveRuntimeIdentifier>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(EffectiveRuntimeIdentifier)' == 'win-x64' ">
     <PlatformOutputFolder>Win64</PlatformOutputFolder>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'win-x86' ">
+  <PropertyGroup Condition=" '$(EffectiveRuntimeIdentifier)' == 'win-x86' ">
     <PlatformOutputFolder>Win32</PlatformOutputFolder>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'osx-arm64' ">
+  <PropertyGroup Condition=" '$(EffectiveRuntimeIdentifier)' == 'osx-arm64' ">
     <PlatformOutputFolder>MacOS-arm64</PlatformOutputFolder>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'osx-x64' ">
+  <PropertyGroup Condition=" '$(EffectiveRuntimeIdentifier)' == 'osx-x64' ">
     <PlatformOutputFolder>MacOS-Intel</PlatformOutputFolder>
   </PropertyGroup>
 
