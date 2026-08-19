@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -13,19 +14,40 @@ namespace Gibbed.TombRaider.DRMEdit.Views
 {
     public partial class FileViewerView : UserControl
     {
+        // Cached per icon key (lazily, on first request) instead of decoding a fresh Bitmap
+        // from the embedded asset stream on every single binding conversion -- tree
+        // virtualization can call this converter repeatedly for the same section types as
+        // nodes scroll in and out of view.
+        private static readonly Dictionary<string, Bitmap?> _iconCache = new();
+
         public static readonly IValueConverter IconKeyToBitmapConverter =
-            new FuncValueConverter<string?, Bitmap?>(iconKey =>
+            new FuncValueConverter<string?, Bitmap?>(GetIcon);
+
+        private static Bitmap? GetIcon(string? iconKey)
+        {
+            if (iconKey == null)
             {
-                var uri = iconKey switch
-                {
-                    "__DRM" => "avares://Gibbed.TombRaider.DRMEdit/Assets/Icons/__DRM.png",
-                    "RenderResource" => "avares://Gibbed.TombRaider.DRMEdit/Assets/Icons/RenderResource.png",
-                    "Script" => "avares://Gibbed.TombRaider.DRMEdit/Assets/Icons/Script.png",
-                    "Wave" => "avares://Gibbed.TombRaider.DRMEdit/Assets/Icons/Wave.png",
-                    _ => null,
-                };
-                return uri == null ? null : new Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri(uri)));
-            });
+                return null;
+            }
+
+            if (_iconCache.TryGetValue(iconKey, out var cached))
+            {
+                return cached;
+            }
+
+            var uri = iconKey switch
+            {
+                "__DRM" => "avares://Gibbed.TombRaider.DRMEdit/Assets/Icons/__DRM.png",
+                "RenderResource" => "avares://Gibbed.TombRaider.DRMEdit/Assets/Icons/RenderResource.png",
+                "Script" => "avares://Gibbed.TombRaider.DRMEdit/Assets/Icons/Script.png",
+                "Wave" => "avares://Gibbed.TombRaider.DRMEdit/Assets/Icons/Wave.png",
+                _ => null,
+            };
+
+            var bitmap = uri == null ? null : new Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri(uri)));
+            _iconCache[iconKey] = bitmap;
+            return bitmap;
+        }
 
         private readonly TreeView _treeView;
         private ScrollViewer? _scrollViewer;

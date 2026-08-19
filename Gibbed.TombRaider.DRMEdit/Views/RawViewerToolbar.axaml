@@ -8,6 +8,9 @@
         <Button Classes="toolbarIcon" Command="{Binding LoadFromFileCommand}" ToolTip.Tip="Load from file">
             <materialIcons:MaterialIcon Kind="FileImportOutline" Width="18" Height="18" />
         </Button>
+        <Button Classes="toolbarIcon" Command="{Binding RefreshCommand}" ToolTip.Tip="Refresh from current section data">
+            <materialIcons:MaterialIcon Kind="Autorenew" Width="18" Height="18" />
+        </Button>
         <Button Classes="toolbarIcon" Command="{Binding SaveToFileCommand}" ToolTip.Tip="Save to file">
             <materialIcons:MaterialIcon Kind="ContentSaveAllOutline" Width="18" Height="18" />
         </Button>

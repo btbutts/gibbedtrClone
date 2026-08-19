@@ -40,9 +40,16 @@ namespace Gibbed.TombRaider.Pack
 {
     internal class Program
     {
+        // Environment.ProcessPath is the real running apphost (Gibbed.TombRaider.Pack.exe
+        // on Windows, extension-less on macOS/Linux), matching what a user actually typed.
+        // Assembly.GetExecutingAssembly().Location, used here previously, returns the managed
+        // .dll instead under the modern .NET apphost model, so help/error text showed
+        // "Gibbed.TombRaider.Pack.dll" rather than the real executable name. Falls back to
+        // the old behavior only if ProcessPath is ever unavailable (hosting edge case).
         private static string GetExecutableName()
         {
-            return Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            return Path.GetFileName(Environment.ProcessPath)
+                ?? Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         }
 
         private static bool LooksLikeOption(string arg)

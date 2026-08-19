@@ -34,19 +34,14 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
         [ObservableProperty]
         public partial double HexRowHeight { get; set; } = 200;
 
-        private readonly byte[] _data;
+        private readonly DRM.Section _section;
+        private byte[] _data = System.Array.Empty<byte>();
 
         public RawViewerViewModel(DRM.Section section)
         {
+            _section = section;
             Title = "Raw View: " + section.Id.ToString("X8");
-
-            _data = new byte[section.Data.Length];
-            section.Data.Read(_data, 0, _data.Length);
-
-            InfoText = string.Format(
-                "ID:\t{0:X8}\nType:\t{1}\nFilesize:\t{2}", section.Id, section.Type, section.Data.Length);
-
-            HexDocument = new MemoryBinaryDocument(_data, isReadOnly: true);
+            LoadFromSection();
         }
 
         [RelayCommand(CanExecute = nameof(CanLoadFromFile))]
@@ -57,6 +52,30 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
         }
 
         private bool CanLoadFromFile() => false;
+
+        // This tab snapshots section.Data once at construction (matches the original
+        // WinForms RawViewer/DynamicByteProvider, which had the same one-shot snapshot with
+        // no refresh path). If a Texture Save on this same section happens while its Raw tab
+        // is already open, that snapshot goes stale silently. Rather than add cross-viewmodel
+        // observer wiring to auto-refresh (a bigger, more invasive change), this gives the
+        // user an explicit, opt-in way to re-snapshot on demand.
+        [RelayCommand]
+        private void Refresh()
+        {
+            LoadFromSection();
+        }
+
+        private void LoadFromSection()
+        {
+            _section.Data.Position = 0;
+            _data = new byte[_section.Data.Length];
+            _section.Data.Read(_data, 0, _data.Length);
+
+            InfoText = string.Format(
+                "ID:\t{0:X8}\nType:\t{1}\nFilesize:\t{2}", _section.Id, _section.Type, _section.Data.Length);
+
+            HexDocument = new MemoryBinaryDocument(_data, isReadOnly: true);
+        }
 
         [RelayCommand]
         private async Task SaveToFileAsync()

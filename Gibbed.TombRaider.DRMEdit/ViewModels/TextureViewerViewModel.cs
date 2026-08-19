@@ -410,9 +410,23 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             var height = bitmap.PixelSize.Height;
             var mip = new byte[width * height * 4];
 
+            // CopyPixels(PixelRect, IntPtr, int, int) -- the overload previously used here --
+            // does not perform any pixel-format conversion: per Avalonia's own source, it
+            // only throws if the *source* bitmap disagrees with itself, then raw-blits its
+            // native pixel bytes regardless of what format this destination buffer declares.
+            // A loaded PNG decodes to Rgba8888/Premul (confirmed empirically), not
+            // Bgra8888/Unpremul, so that overload was silently corrupting alpha
+            // premultiplication on any replacement image with real partial transparency (the
+            // R/B channel confusion happened to self-cancel against SwapRedBlue below, purely
+            // by coincidence -- the premultiplication mismatch did not). CopyPixels(ILockedFramebuffer)
+            // instead runs PixelFormatTranscoder.Transcode, correctly converting whatever
+            // format/alpha-mode the source actually decoded into, matching the original
+            // WinForms code's intent (it explicitly rejected any non-Format32bppArgb bitmap
+            // rather than risk exactly this kind of silent corruption) using a real conversion
+            // Avalonia provides instead of GDI+'s narrower reject-on-mismatch guard.
             using (var locked = new WriteableBitmap(bitmap.PixelSize, bitmap.Dpi, PixelFormat.Bgra8888, AlphaFormat.Unpremul).Lock())
             {
-                bitmap.CopyPixels(new PixelRect(0, 0, width, height), locked.Address, mip.Length, width * 4);
+                bitmap.CopyPixels(locked);
                 System.Runtime.InteropServices.Marshal.Copy(locked.Address, mip, 0, mip.Length);
             }
 

@@ -8,11 +8,18 @@
          gap, matching the close button's existing flush right edge. All of that leftover
          space collects below the buttons instead, which is deliberate: title bar height
          (40, set in MainWindow.axaml) and these buttons' own Width/spacing are unchanged. -->
+    <!-- Minimize/maximize hover previously used a hardcoded #22FFFFFF wash, which stayed a
+         fixed near-white regardless of light/dark theme (nearly invisible on light chrome).
+         ButtonBackgroundPointerOver is FluentTheme's own semantic hover token, already used
+         for the app's toolbar icon buttons elsewhere (App.axaml), so this now matches both
+         the rest of the chrome and the current theme automatically. Close's hover stays a
+         hardcoded #E81123 deliberately: OS-standard "always red" close-hover, not
+         theme-dependent on any platform. -->
     <StackPanel Orientation="Horizontal" Height="30" VerticalAlignment="Top">
         <Button Name="MinimizeButton" Width="46" Height="30" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Minimize">
             <Button.Styles>
                 <Style Selector="Button:pointerover /template/ ContentPresenter">
-                    <Setter Property="Background" Value="#22FFFFFF" />
+                    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
                 </Style>
             </Button.Styles>
             <Path Data="M0,0 L10,0" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" Width="10" Height="1" />
@@ -20,10 +27,25 @@
         <Button Name="MaximizeButton" Width="46" Height="30" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Maximize">
             <Button.Styles>
                 <Style Selector="Button:pointerover /template/ ContentPresenter">
-                    <Setter Property="Background" Value="#22FFFFFF" />
+                    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
                 </Style>
             </Button.Styles>
-            <Rectangle Width="10" Height="10" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" />
+            <!-- Two glyphs, one always hidden: WindowsTitleBarButtons.axaml.cs toggles which
+                 is visible based on the owner Window's actual WindowState, so the icon
+                 reflects what clicking the button will now do (Maximize vs Restore) instead
+                 of always showing a single square regardless of state. -->
+            <Panel>
+                <Rectangle Name="MaximizeGlyph" Width="10" Height="10" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" />
+                <Canvas Name="RestoreGlyph" Width="10" Height="10" IsVisible="False">
+                    <!-- Back square's peeking top+right edge only (an L-shaped path, not a
+                         full second outline) is the standard Windows restore icon look. -->
+                    <Path Data="M2,2 L2,0 L10,0 L10,8 L8,8" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" />
+                    <!-- Front square: opaque fill matching the title bar's own resting
+                         background so it cleanly covers the part of the back square it
+                         overlaps, rather than showing two crossed outlines. -->
+                    <Rectangle Canvas.Left="0" Canvas.Top="2" Width="8" Height="8" Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" Fill="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" />
+                </Canvas>
+            </Panel>
         </Button>
         <Button Name="CloseButton" Width="46" Height="30" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderThickness="0" CornerRadius="0" Background="Transparent" ToolTip.Tip="Close">
             <Button.Styles>

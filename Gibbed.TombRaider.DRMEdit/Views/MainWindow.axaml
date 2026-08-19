@@ -14,6 +14,17 @@
         ExtendClientAreaTitleBarHeightHint="40"
         Title="Tomb Raider DRM Editor">
 
+    <!-- Both gestures registered unconditionally rather than picked per-platform: setting
+         MenuItem.InputGesture (see OpenMenuItem below, set from code-behind) only ever
+         displays text, it never registers a real key binding on its own, so without this,
+         Ctrl+O/Cmd+O never opened anything on either platform. Registering both here is
+         harmless: Windows keyboards have no physical Cmd key to accidentally trigger Meta+O
+         with, and a Mac user pressing literal Ctrl+O just opens the same dialog Cmd+O would. -->
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+O" Command="{Binding OpenCommand}" />
+        <KeyBinding Gesture="Cmd+O" Command="{Binding OpenCommand}" />
+    </Window.KeyBindings>
+
     <Window.Styles>
         <!-- Pop-out/close buttons: hidden unless their tab is hovered or selected. -->
         <Style Selector="ListBoxItem:not(:pointerover):not(:selected) Button.tabPopOut">
@@ -155,7 +166,7 @@
             <Menu Name="ToolbarMenu" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
                   Margin="6,0,0,2" FontSize="13">
                 <MenuItem Header="_File" CornerRadius="4" Margin="0,0,3,0">
-                    <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGesture="Ctrl+O">
+                    <MenuItem Name="OpenMenuItem" Header="_Open" Command="{Binding OpenCommand}">
                         <MenuItem.Icon>
                             <materialIcons:MaterialIcon Kind="FolderFileOutline" Width="16" Height="16" />
                         </MenuItem.Icon>
