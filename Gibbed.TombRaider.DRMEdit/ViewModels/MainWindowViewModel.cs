@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Gibbed.TombRaider.DRMEdit.Services;
 using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
 
 namespace Gibbed.TombRaider.DRMEdit.ViewModels
@@ -104,8 +105,14 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             }
             catch (System.Exception ex)
             {
-                var box = MessageBoxManager.GetMessageBoxStandard(
-                    "Error", $"Could not open '{System.IO.Path.GetFileName(path)}': {ex.Message}", ButtonEnum.Ok, Icon.Error);
+                var box = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
+                {
+                    ContentTitle = "Error",
+                    ContentMessage = $"Could not open '{System.IO.Path.GetFileName(path)}': {ex.Message}",
+                    ButtonDefinitions = ButtonEnum.Ok,
+                    Icon = Icon.Error,
+                    Background = MessageBoxTheme.GetBackgroundBrush(),
+                });
                 await box.ShowAsync();
                 return;
             }

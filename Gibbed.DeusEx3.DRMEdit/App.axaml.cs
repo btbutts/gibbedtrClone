@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using Gibbed.DeusEx3.DRMEdit.ViewModels;
 using Gibbed.DeusEx3.DRMEdit.Views;
 using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
 
 namespace Gibbed.DeusEx3.DRMEdit
@@ -50,11 +51,14 @@ namespace Gibbed.DeusEx3.DRMEdit
 
         private static async void ShowHelpThenShutdown(IClassicDesktopStyleApplicationLifetime desktop, string helpText)
         {
-            var box = MessageBoxManager.GetMessageBoxStandard(
-                "Gibbed.DeusEx3.DRMEdit",
-                helpText,
-                ButtonEnum.Ok,
-                HelpIsError ? Icon.Error : Icon.Info);
+            var box = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
+            {
+                ContentTitle = "Gibbed.DeusEx3.DRMEdit",
+                ContentMessage = helpText,
+                ButtonDefinitions = ButtonEnum.Ok,
+                Icon = HelpIsError ? Icon.Error : Icon.Info,
+                Background = MessageBoxTheme.GetBackgroundBrush(),
+            });
             await box.ShowAsync();
             desktop.Shutdown();
         }

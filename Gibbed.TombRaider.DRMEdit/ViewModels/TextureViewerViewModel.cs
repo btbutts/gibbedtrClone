@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DRM = Gibbed.TombRaider.FileFormats.DRM;
 using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
 using SkiaSharp;
 using Texture.BCnE.NET.Codec;
@@ -387,7 +388,14 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             }
             catch (Exception ex)
             {
-                var box = MessageBoxManager.GetMessageBoxStandard("Error", ex.Message, ButtonEnum.Ok, Icon.Error);
+                var box = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
+                {
+                    ContentTitle = "Error",
+                    ContentMessage = ex.Message,
+                    ButtonDefinitions = ButtonEnum.Ok,
+                    Icon = Icon.Error,
+                    Background = MessageBoxTheme.GetBackgroundBrush(),
+                });
                 await box.ShowAsync();
             }
         }

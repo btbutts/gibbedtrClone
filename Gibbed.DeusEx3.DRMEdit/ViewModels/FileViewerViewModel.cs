@@ -6,6 +6,7 @@ using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
 using DRM = Gibbed.DeusEx3.FileFormats.DRM;
 
@@ -114,8 +115,14 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
             }
             catch (System.Exception ex)
             {
-                var box = MessageBoxManager.GetMessageBoxStandard(
-                    "Error", $"Could not open section {section.Id:X8}: {ex.Message}", ButtonEnum.Ok, Icon.Error);
+                var box = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
+                {
+                    ContentTitle = "Error",
+                    ContentMessage = $"Could not open section {section.Id:X8}: {ex.Message}",
+                    ButtonDefinitions = ButtonEnum.Ok,
+                    Icon = Icon.Error,
+                    Background = MessageBoxTheme.GetBackgroundBrush(),
+                });
                 await box.ShowAsync();
                 return;
             }
