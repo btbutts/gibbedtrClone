@@ -113,11 +113,11 @@ namespace Gibbed.DeusEx3.DRMEdit.Views
             }
         }
 
-        private void OnNodeDoubleTapped(object? sender, TappedEventArgs e)
+        private async void OnNodeDoubleTapped(object? sender, TappedEventArgs e)
         {
             if (DataContext is FileViewerViewModel viewModel && viewModel.SelectedSection != null)
             {
-                viewModel.OpenSection(viewModel.SelectedSection, false);
+                await viewModel.OpenSectionAsync(viewModel.SelectedSection, false);
             }
         }
     }

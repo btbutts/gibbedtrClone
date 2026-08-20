@@ -7,6 +7,8 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Gibbed.IO;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using DRM = Gibbed.TombRaider.FileFormats.DRM;
 
 namespace Gibbed.TombRaider.DRMEdit.ViewModels
@@ -72,18 +74,21 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
         }
 
         [RelayCommand]
-        private void ViewSection()
+        private Task ViewSection()
         {
-            OpenSection(SelectedSection, false);
+            return OpenSectionAsync(SelectedSection, false);
         }
 
         [RelayCommand]
-        private void ViewSectionRaw()
+        private Task ViewSectionRaw()
         {
-            OpenSection(SelectedSection, true);
+            return OpenSectionAsync(SelectedSection, true);
         }
 
-        public void OpenSection(SectionNode? node, bool forceRaw)
+        // A section whose deserializer chokes (e.g. the PCD9 "Unknown16 & 0x8000" flag, or
+        // any other malformed RenderResource) used to crash the whole process here, since
+        // TextureViewerViewModel's constructor deserializes with no guard of its own.
+        public async Task OpenSectionAsync(SectionNode? node, bool forceRaw)
         {
             if (node == null)
             {
@@ -97,15 +102,25 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             }
 
             DocumentTabViewModel viewer;
-            if (forceRaw == true)
+            try
             {
-                viewer = new RawViewerViewModel(section);
+                if (forceRaw == true)
+                {
+                    viewer = new RawViewerViewModel(section);
+                }
+                else
+                {
+                    viewer = section.Type == DRM.SectionType.RenderResource
+                        ? new TextureViewerViewModel(section)
+                        : new RawViewerViewModel(section);
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                viewer = section.Type == DRM.SectionType.RenderResource
-                    ? new TextureViewerViewModel(section)
-                    : new RawViewerViewModel(section);
+                var box = MessageBoxManager.GetMessageBoxStandard(
+                    "Error", $"Could not open section {section.Id:X8}: {ex.Message}", ButtonEnum.Ok, Icon.Error);
+                await box.ShowAsync();
+                return;
             }
 
             _owner.AddDocument(viewer);

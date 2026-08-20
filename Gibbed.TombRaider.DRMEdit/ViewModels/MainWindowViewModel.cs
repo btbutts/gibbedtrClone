@@ -7,6 +7,8 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Gibbed.TombRaider.DRMEdit.Services;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 
 namespace Gibbed.TombRaider.DRMEdit.ViewModels
 {
@@ -86,13 +88,29 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             var paths = await _filePickerService.OpenFilesAsync(GetTopLevel?.Invoke(), "Open DRM", fileTypes, true);
             foreach (var path in paths)
             {
-                OpenFile(path);
+                await OpenFileAsync(path);
             }
         }
 
-        public void OpenFile(string path)
+        // A missing/corrupt/unsupported-version DRM (or one hit via a startup command line
+        // arg, see MainWindow's Opened handler) used to crash the whole process here, since
+        // FileViewerViewModel's constructor deserializes with no guard of its own.
+        public async System.Threading.Tasks.Task OpenFileAsync(string path)
         {
-            AddDocument(new FileViewerViewModel(this, path));
+            FileViewerViewModel viewer;
+            try
+            {
+                viewer = new FileViewerViewModel(this, path);
+            }
+            catch (System.Exception ex)
+            {
+                var box = MessageBoxManager.GetMessageBoxStandard(
+                    "Error", $"Could not open '{System.IO.Path.GetFileName(path)}': {ex.Message}", ButtonEnum.Ok, Icon.Error);
+                await box.ShowAsync();
+                return;
+            }
+
+            AddDocument(viewer);
         }
 
         [RelayCommand]

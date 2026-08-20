@@ -253,13 +253,13 @@ namespace Gibbed.TombRaider.DRMEdit.Views
 
         public MainWindow(List<string> startupFiles) : this()
         {
-            Opened += (_, _) =>
+            Opened += async (_, _) =>
             {
                 if (DataContext is MainWindowViewModel viewModel)
                 {
                     foreach (var path in startupFiles)
                     {
-                        viewModel.OpenFile(path);
+                        await viewModel.OpenFileAsync(path);
                     }
                 }
             };
