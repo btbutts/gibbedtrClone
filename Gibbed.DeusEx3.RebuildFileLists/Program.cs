@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Gibbed.CrystalDynamics.FileFormats;
-using NDesk.Options;
+using Mono.Options;
 
 namespace Gibbed.DeusEx3.RebuildFileLists
 {

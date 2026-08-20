@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia;
-using NDesk.Options;
+using Mono.Options;
 
 namespace Gibbed.TombRaider.DRMEdit
 {

@@ -27,7 +27,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Gibbed.CrystalDynamics.FileFormats;
 using Gibbed.IO;
-using NDesk.Options;
+using Mono.Options;
 
 namespace Gibbed.TombRaider.RebuildFileLists
 {

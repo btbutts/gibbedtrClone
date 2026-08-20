@@ -2,11 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>NDesk.Options</RootNamespace>
-    <AssemblyName>NDesk.Options</AssemblyName>
+    <RootNamespace>Mono.Options</RootNamespace>
+    <AssemblyName>Mono.Options</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <DefineConstants>$(DefineConstants);NDESK_OPTIONS</DefineConstants>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- Options.cs is vendored unmodified from upstream mono/mono; its legacy
+         ISerializable support on OptionException predates these APIs being
+         marked obsolete. Suppressed here rather than editing vendored source. -->
+    <NoWarn>$(NoWarn);SYSLIB0003;SYSLIB0051;CS0672</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

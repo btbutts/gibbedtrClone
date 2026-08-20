@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using System.IO;
 using Gibbed.DeusEx3.FileFormats;
 using Gibbed.IO;
-using NDesk.Options;
+using Mono.Options;
 
 namespace Gibbed.DeusEx3.DRMDecompress
 {

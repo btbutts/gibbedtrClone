@@ -27,7 +27,7 @@ using System.IO;
 using System.Xml.XPath;
 using Gibbed.CrystalDynamics.FileFormats;
 using Gibbed.IO;
-using NDesk.Options;
+using Mono.Options;
 
 namespace Gibbed.DeusEx3.Pack
 {

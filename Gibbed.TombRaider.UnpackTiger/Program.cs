@@ -29,7 +29,7 @@ using System.Runtime.InteropServices;
 using System.Xml;
 using Gibbed.CrystalDynamics.FileFormats;
 using Gibbed.IO;
-using NDesk.Options;
+using Mono.Options;
 using Big = Gibbed.CrystalDynamics.FileFormats.Big;
 
 namespace Gibbed.TombRaider.UnpackTiger

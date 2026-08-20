@@ -26,7 +26,7 @@ using System.IO;
 using System.Linq;
 using Gibbed.IO;
 using System.Runtime.InteropServices;
-using NDesk.Options;
+using Mono.Options;
 
 namespace Gibbed.DeusEx3.Demux
 {

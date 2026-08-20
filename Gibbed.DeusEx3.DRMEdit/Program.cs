@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Avalonia;
-using NDesk.Options;
+using Mono.Options;
 
 namespace Gibbed.DeusEx3.DRMEdit
 {

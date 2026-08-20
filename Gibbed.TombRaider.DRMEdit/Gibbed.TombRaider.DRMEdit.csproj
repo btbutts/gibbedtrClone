@@ -43,7 +43,7 @@
     <ProjectReference Include="..\Gibbed.IO\Gibbed.IO.csproj" />
     <ProjectReference Include="..\Texture.BCnE.NET.Codec\Texture.BCnE.NET.Codec.csproj" />
     <ProjectReference Include="..\Gibbed.TombRaider.FileFormats\Gibbed.TombRaider.FileFormats.csproj" />
-    <ProjectReference Include="..\NDesk.Options\NDesk.Options.csproj" />
+    <ProjectReference Include="..\Mono.Options\Mono.Options.csproj" />
   </ItemGroup>
 
 </Project>

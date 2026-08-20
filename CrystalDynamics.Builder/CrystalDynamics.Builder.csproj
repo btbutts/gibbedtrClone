@@ -29,7 +29,7 @@
     <ProjectToBuild Include="..\Gibbed.TombRaider.RebuildFileLists\Gibbed.TombRaider.RebuildFileLists.csproj" />
     <ProjectToBuild Include="..\Gibbed.TombRaider.Unpack\Gibbed.TombRaider.Unpack.csproj" />
     <ProjectToBuild Include="..\Gibbed.TombRaider.UnpackTiger\Gibbed.TombRaider.UnpackTiger.csproj" />
-    <ProjectToBuild Include="..\NDesk.Options\NDesk.Options.csproj" />
+    <ProjectToBuild Include="..\Mono.Options\Mono.Options.csproj" />
     <ProjectToBuild Include="..\Gibbed.DeusEx3.DRMDecompress\Gibbed.DeusEx3.DRMDecompress.csproj" />
     <ProjectToBuild Include="..\Gibbed.DeusEx3.DRMEdit\Gibbed.DeusEx3.DRMEdit.csproj" />
     <ProjectToBuild Include="..\Gibbed.DeusEx3.DRMUnpack\Gibbed.DeusEx3.DRMUnpack.csproj" />

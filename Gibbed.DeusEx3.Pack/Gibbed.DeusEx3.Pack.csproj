@@ -20,7 +20,7 @@
     <ProjectReference Include="..\Gibbed.CrystalDynamics.FileFormats\Gibbed.CrystalDynamics.FileFormats.csproj" />
     <ProjectReference Include="..\Gibbed.DeusEx3.FileFormats\Gibbed.DeusEx3.FileFormats.csproj" />
     <ProjectReference Include="..\Gibbed.IO\Gibbed.IO.csproj" />
-    <ProjectReference Include="..\NDesk.Options\NDesk.Options.csproj" />
+    <ProjectReference Include="..\Mono.Options\Mono.Options.csproj" />
   </ItemGroup>
 
 </Project>

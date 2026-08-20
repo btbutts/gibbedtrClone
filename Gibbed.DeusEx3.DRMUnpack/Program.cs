@@ -26,7 +26,7 @@ using System.IO;
 using System.Xml;
 using Gibbed.DeusEx3.FileFormats;
 using Gibbed.IO;
-using NDesk.Options;
+using Mono.Options;
 
 namespace Gibbed.DeusEx3.DRMUnpack
 {
