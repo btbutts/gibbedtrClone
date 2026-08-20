@@ -135,9 +135,11 @@ namespace Gibbed.TombRaider.FileFormats
                     }
                     else if (block.Type == 2)
                     {
-                        var zlib = new ZLibStream(buffer, CompressionMode.Decompress);
-                        output.Seek(offset, SeekOrigin.Begin);
-                        output.WriteFromStream(zlib, block.UncompressedSize);
+                        using (var zlib = new ZLibStream(buffer, CompressionMode.Decompress))
+                        {
+                            output.Seek(offset, SeekOrigin.Begin);
+                            output.WriteFromStream(zlib, block.UncompressedSize);
+                        }
                         offset += block.UncompressedSize.Align(16);
                     }
                     else

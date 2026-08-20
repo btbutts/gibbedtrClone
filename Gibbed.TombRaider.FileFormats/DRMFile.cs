@@ -120,8 +120,8 @@ namespace Gibbed.TombRaider.FileFormats
 
             // Go back and write unknowns length
             data.Seek(4, SeekOrigin.Begin);
-            data.WriteValueU32(unknown04_size);
-            data.WriteValueU32(unknown08_size);
+            data.WriteValueU32(unknown04_size, this.Endianness);
+            data.WriteValueU32(unknown08_size, this.Endianness);
 
             data.Position = 0;
             return data;

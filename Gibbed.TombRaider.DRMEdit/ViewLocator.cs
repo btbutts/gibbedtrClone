@@ -14,7 +14,11 @@ namespace Gibbed.TombRaider.DRMEdit
                 return null;
             }
 
-            var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
+            var name = param.GetType().FullName!.Replace(".ViewModels.", ".Views.", StringComparison.Ordinal);
+            if (name.EndsWith("ViewModel", StringComparison.Ordinal) == true)
+            {
+                name = name.Substring(0, name.Length - "ViewModel".Length) + "View";
+            }
             var type = Type.GetType(name);
 
             if (type != null)

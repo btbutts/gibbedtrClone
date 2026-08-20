@@ -424,7 +424,8 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             // WinForms code's intent (it explicitly rejected any non-Format32bppArgb bitmap
             // rather than risk exactly this kind of silent corruption) using a real conversion
             // Avalonia provides instead of GDI+'s narrower reject-on-mismatch guard.
-            using (var locked = new WriteableBitmap(bitmap.PixelSize, bitmap.Dpi, PixelFormat.Bgra8888, AlphaFormat.Unpremul).Lock())
+            using (var scratchBitmap = new WriteableBitmap(bitmap.PixelSize, bitmap.Dpi, PixelFormat.Bgra8888, AlphaFormat.Unpremul))
+            using (var locked = scratchBitmap.Lock())
             {
                 bitmap.CopyPixels(locked);
                 System.Runtime.InteropServices.Marshal.Copy(locked.Address, mip, 0, mip.Length);
