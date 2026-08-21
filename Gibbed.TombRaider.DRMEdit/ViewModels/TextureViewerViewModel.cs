@@ -394,7 +394,10 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
                     ContentMessage = ex.Message,
                     ButtonDefinitions = ButtonEnum.Ok,
                     Icon = Icon.Error,
-                    Background = MessageBoxTheme.GetBackgroundBrush(),
+                    ContentBackground = MessageBoxTheme.GetContentBackgroundBrush(),
+                    ContentBodyForeground = MessageBoxTheme.GetContentBodyForegroundBrush(),
+                    ContentBodyFontSize = MessageBoxTheme.GetContentBodyFontSize(),
+                    ContentHeaderFontSize = MessageBoxTheme.GetContentHeaderFontSize(),
                 });
                 await box.ShowAsync();
             }

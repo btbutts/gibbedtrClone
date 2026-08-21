@@ -110,10 +110,13 @@ namespace Gibbed.DeusEx3.DRMEdit.ViewModels
                 var box = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
                 {
                     ContentTitle = "Error",
-                    ContentMessage = $"Could not open '{System.IO.Path.GetFileName(path)}': {ex.Message}",
+                    ContentMessage = $"Could not open '{System.IO.Path.GetFileName(path)}':\n{ex.Message}",
                     ButtonDefinitions = ButtonEnum.Ok,
                     Icon = Icon.Error,
-                    Background = MessageBoxTheme.GetBackgroundBrush(),
+                    ContentBackground = MessageBoxTheme.GetContentBackgroundBrush(),
+                    ContentBodyForeground = MessageBoxTheme.GetContentBodyForegroundBrush(),
+                    ContentBodyFontSize = MessageBoxTheme.GetContentBodyFontSize(),
+                    ContentHeaderFontSize = MessageBoxTheme.GetContentHeaderFontSize(),
                 });
                 await box.ShowAsync();
                 return;

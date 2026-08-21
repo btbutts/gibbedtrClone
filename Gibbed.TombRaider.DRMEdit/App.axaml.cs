@@ -57,7 +57,10 @@ namespace Gibbed.TombRaider.DRMEdit
                 ContentMessage = helpText,
                 ButtonDefinitions = ButtonEnum.Ok,
                 Icon = HelpIsError ? Icon.Error : Icon.Info,
-                Background = MessageBoxTheme.GetBackgroundBrush(),
+                ContentBackground = MessageBoxTheme.GetContentBackgroundBrush(),
+                ContentBodyForeground = MessageBoxTheme.GetContentBodyForegroundBrush(),
+                ContentBodyFontSize = MessageBoxTheme.GetContentBodyFontSize(),
+                ContentHeaderFontSize = MessageBoxTheme.GetContentHeaderFontSize(),
             });
             await box.ShowAsync();
             desktop.Shutdown();
