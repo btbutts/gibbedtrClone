@@ -1,6 +1,4 @@
 using System;
-using System.Buffers.Binary;
-using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
@@ -12,7 +10,7 @@ using DRM = Gibbed.TombRaider.FileFormats.DRM;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
-using SkiaSharp;
+using ImageMagick;
 using Texture.BCnE.NET.Codec;
 
 namespace Gibbed.TombRaider.DRMEdit.ViewModels
@@ -233,6 +231,7 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
             var fileTypes = new[]
             {
                 new FilePickerFileType("PNG Files") { Patterns = new[] { "*.png" } },
+                new FilePickerFileType("TIFF Files") { Patterns = new[] { "*.tif", "*.tiff" } },
                 FilePickerFileTypes.All,
             };
             var savePath = await App.PickerService.SaveFileAsync(GetTopLevel?.Invoke(), "Save To File", fileTypes, null);
@@ -241,32 +240,23 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
                 return;
             }
 
-            var pngBytes = EncodePngLikeOriginal(Preview);
-            System.IO.File.WriteAllBytes(savePath, pngBytes);
+            var format = savePath.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
+                         savePath.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase)
+                ? MagickFormat.Tiff
+                : MagickFormat.Png;
+
+            var imageBytes = EncodeImage(Preview, format);
+            System.IO.File.WriteAllBytes(savePath, imageBytes);
         }
 
-        // Avalonia's Bitmap.Save(stream, PngBitmapEncoderOptions) only exposes
-        // CompressionLevel; the SkiaSharp encoder underneath it still independently picks
-        // a per-scanline filter (Sub/Up/Avg/Paeth) via SKPngEncoderOptions.FilterFlags,
-        // which Avalonia's wrapper never surfaces. That adaptive-filter heuristic measurably
-        // hurts LZ77 compressibility on textures with large flat/repeating regions: for a
-        // real TR texture this produced a PNG ~1.7x the size of the original WinForms/GDI+
-        // export for byte-identical decoded pixel data (confirmed by decompressing both
-        // IDAT streams and diffing the per-row filter bytes: GDI+ always wrote filter type
-        // 0/None; Skia's default wrote mostly Avg/Paeth). Bypassing Avalonia's wrapper and
-        // calling SkiaSharp directly, pinned in the .csproj to the exact version
-        // Avalonia.Skia 12.1.1 depends on so no second native Skia binary gets loaded, with
-        // FilterFlags.None recovers GDI+-equivalent file sizes.
-        //
-        // SkiaSharp's PNG encoder has no DPI/resolution option at all, so the 192 DPI GDI+
-        // used to write (inherited from the original dev machine's display scaling, not a
-        // deliberate quality setting; DPI is a print/layout hint only and does not affect
-        // the decoded pixel grid) is hand-spliced back in as a minimal pHYs chunk, purely
-        // for byte-level parity with the original tool's output.
-        private static byte[] EncodePngLikeOriginal(WriteableBitmap bitmap)
-        {
-            const double OriginalDpi = 192.0;
+        // 192 DPI matches what the original WinForms/GDI+ tool wrote (inherited from the
+        // original dev machine's display scaling, not a deliberate quality setting; DPI is
+        // a print/layout hint only and does not affect the decoded pixel grid), preserved
+        // here for parity with that tool's PNG output.
+        private const double OriginalDpi = 192.0;
 
+        private static byte[] EncodeImage(WriteableBitmap bitmap, MagickFormat format)
+        {
             var width = bitmap.PixelSize.Width;
             var height = bitmap.PixelSize.Height;
             var pixels = new byte[width * height * 4];
@@ -275,93 +265,18 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
                 System.Runtime.InteropServices.Marshal.Copy(locked.Address, pixels, 0, pixels.Length);
             }
 
-            var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-            var handle = System.Runtime.InteropServices.GCHandle.Alloc(pixels, System.Runtime.InteropServices.GCHandleType.Pinned);
-            try
+            // Preview's native pixel format is PixelFormat.Bgra8888 (see UpdatePreview).
+            if (format == MagickFormat.Png)
             {
-                using var skBitmap = new SKBitmap();
-                if (skBitmap.InstallPixels(info, handle.AddrOfPinnedObject(), info.RowBytes) == false)
-                {
-                    throw new InvalidOperationException("Failed to install pixel buffer into SKBitmap for PNG encoding.");
-                }
-
-                using var pixmap = skBitmap.PeekPixels()
-                    ?? throw new InvalidOperationException("SKBitmap.PeekPixels() returned null after a successful InstallPixels call.");
-                using var data = pixmap.Encode(new SKPngEncoderOptions(SKPngEncoderFilterFlags.None, 9))
-                    ?? throw new InvalidOperationException("SkiaSharp failed to encode the texture preview as PNG.");
-                return InsertPhysChunk(data.ToArray(), OriginalDpi);
+                return PNGEncoder.Encode(SwapRedBlue(pixels), width, height, OriginalDpi);
             }
-            finally
-            {
-                handle.Free();
-            }
-        }
 
-        // PNG requires pHYs, if present, to appear before the first IDAT. Splices a minimal
-        // one (pixels-per-meter, unit=meter, the same units GDI+ wrote) right after the
-        // mandatory IHDR, which is always exactly 33 bytes in (8 signature + 8 chunk header
-        // + 13 IHDR data + 4 CRC).
-        private static byte[] InsertPhysChunk(byte[] png, double dpi)
-        {
-            var pixelsPerMeter = (uint)Math.Round(dpi / 0.0254);
-            var chunkData = new byte[9];
-            BinaryPrimitives.WriteUInt32BigEndian(chunkData.AsSpan(0, 4), pixelsPerMeter);
-            BinaryPrimitives.WriteUInt32BigEndian(chunkData.AsSpan(4, 4), pixelsPerMeter);
-            chunkData[8] = 1; // unit specifier: meter
-
-            var chunk = BuildPngChunk("pHYs", chunkData);
-
-            const int ihdrEnd = 8 + 8 + 13 + 4;
-            var result = new byte[png.Length + chunk.Length];
-            Array.Copy(png, 0, result, 0, ihdrEnd);
-            Array.Copy(chunk, 0, result, ihdrEnd, chunk.Length);
-            Array.Copy(png, ihdrEnd, result, ihdrEnd + chunk.Length, png.Length - ihdrEnd);
-            return result;
-        }
-
-        private static byte[] BuildPngChunk(string type, byte[] chunkData)
-        {
-            var typeBytes = Encoding.ASCII.GetBytes(type);
-            var chunk = new byte[4 + 4 + chunkData.Length + 4];
-            BinaryPrimitives.WriteUInt32BigEndian(chunk.AsSpan(0, 4), (uint)chunkData.Length);
-            typeBytes.CopyTo(chunk, 4);
-            chunkData.CopyTo(chunk, 8);
-            var crc = Crc32(typeBytes, chunkData);
-            BinaryPrimitives.WriteUInt32BigEndian(chunk.AsSpan(8 + chunkData.Length, 4), crc);
-            return chunk;
-        }
-
-        private static readonly uint[] _crc32Table = BuildCrc32Table();
-
-        private static uint[] BuildCrc32Table()
-        {
-            var table = new uint[256];
-            for (uint n = 0; n < 256; n++)
-            {
-                var c = n;
-                for (var k = 0; k < 8; k++)
-                {
-                    c = (c & 1) != 0 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
-                }
-                table[n] = c;
-            }
-            return table;
-        }
-
-        // Standard CRC-32 (ISO 3309 / zip / PNG Annex D), every PNG chunk is terminated
-        // with this same algorithm over its type + data bytes.
-        private static uint Crc32(byte[] type, byte[] data)
-        {
-            var crc = 0xFFFFFFFFu;
-            foreach (var b in type)
-            {
-                crc = _crc32Table[(crc ^ b) & 0xFF] ^ (crc >> 8);
-            }
-            foreach (var b in data)
-            {
-                crc = _crc32Table[(crc ^ b) & 0xFF] ^ (crc >> 8);
-            }
-            return crc ^ 0xFFFFFFFF;
+            var settings = new PixelReadSettings((uint)width, (uint)height, StorageType.Char, PixelMapping.BGRA);
+            using var image = new MagickImage(pixels, settings);
+            image.Density = new Density(OriginalDpi, OriginalDpi, DensityUnit.PixelsPerInch);
+            using var stream = new System.IO.MemoryStream();
+            image.Write(stream, format);
+            return stream.ToArray();
         }
 
         [RelayCommand]
@@ -405,9 +320,9 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
 
         private void ReplaceImage(string path)
         {
-            using var bitmap = new Bitmap(path);
+            using var image = new MagickImage(path);
 
-            if (bitmap.PixelSize.Width != _texture.Width || bitmap.PixelSize.Height != _texture.Height)
+            if (image.Width != (uint)_texture.Width || image.Height != (uint)_texture.Height)
             {
                 throw new FormatException("New texture must have the same size as the old one");
             }
@@ -417,32 +332,20 @@ namespace Gibbed.TombRaider.DRMEdit.ViewModels
                 throw new NotSupportedException("Texture with multiple mipmaps not supported");
             }
 
-            var width = bitmap.PixelSize.Width;
-            var height = bitmap.PixelSize.Height;
-            var mip = new byte[width * height * 4];
-
-            // CopyPixels(PixelRect, IntPtr, int, int) -- the overload previously used here --
-            // does not perform any pixel-format conversion: per Avalonia's own source, it
-            // only throws if the *source* bitmap disagrees with itself, then raw-blits its
-            // native pixel bytes regardless of what format this destination buffer declares.
-            // A loaded PNG decodes to Rgba8888/Premul (confirmed empirically), not
-            // Bgra8888/Unpremul, so that overload was silently corrupting alpha
-            // premultiplication on any replacement image with real partial transparency (the
-            // R/B channel confusion happened to self-cancel against SwapRedBlue below, purely
-            // by coincidence -- the premultiplication mismatch did not). CopyPixels(ILockedFramebuffer)
-            // instead runs PixelFormatTranscoder.Transcode, correctly converting whatever
-            // format/alpha-mode the source actually decoded into, matching the original
-            // WinForms code's intent (it explicitly rejected any non-Format32bppArgb bitmap
-            // rather than risk exactly this kind of silent corruption) using a real conversion
-            // Avalonia provides instead of GDI+'s narrower reject-on-mismatch guard.
-            using (var scratchBitmap = new WriteableBitmap(bitmap.PixelSize, bitmap.Dpi, PixelFormat.Bgra8888, AlphaFormat.Unpremul))
-            using (var locked = scratchBitmap.Lock())
+            if (image.HasAlpha == false)
             {
-                bitmap.CopyPixels(locked);
-                System.Runtime.InteropServices.Marshal.Copy(locked.Address, mip, 0, mip.Length);
+                image.Alpha(AlphaOption.Opaque);
             }
 
-            mip = SwapRedBlue(mip);
+            var width = (int)image.Width;
+            var height = (int)image.Height;
+
+            // Requesting RGBA directly (rather than Magick.NET's native-order export) matches
+            // what PCD9/TextureCodec already expect (see UpdatePreview's comment on channel
+            // order), so no manual swap is needed here, unlike the BGRA read on the encode
+            // side above.
+            var mip = image.GetPixelsUnsafe().ToByteArray(PixelMapping.RGBA)
+                ?? throw new InvalidOperationException("Magick.NET failed to export pixel data from the replacement image.");
 
             switch (_texture.Format)
             {
